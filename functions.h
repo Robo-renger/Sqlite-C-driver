@@ -2,5 +2,6 @@
 #define FUNCTIONS_H
 
 void test();
+void withdraw();
 
 #endif  
