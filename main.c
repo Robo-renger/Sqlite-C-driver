@@ -3,9 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "database.h"
+#include "functions.h"
 
 int main(void)
 {
+    test();
     sqlite3 *db;
     char *err_msg;
 
