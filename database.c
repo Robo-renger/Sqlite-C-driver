@@ -5,6 +5,7 @@
 #include "database.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h> 
 
 char *my_strdup(const char *s)
 {
@@ -208,6 +209,129 @@ struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
     sqlite3_finalize(stmt);
     return entityList;
 }
+struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
+{
+    struct EntityList entityList = {.entities = NULL, .size = 0};
+
+    char *err_msg = 0;
+    sqlite3_stmt *stmt;
+    int rc;
+
+    const char *tableName = (entity_type == TRANSACTION) ? "Transactions" : 
+                                               (entity_type == ACCOUNT) ? "accounts" : NULL;
+
+    if (tableName == NULL)
+    {
+        fprintf(stderr, "Invalid entity type\n");
+        return entityList; // Return an empty list for an invalid entity type
+    }
+
+    // Construct the SQL query
+    char sql[100];
+    snprintf(sql, sizeof(sql), "SELECT * FROM %s", tableName);
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return entityList; // Return an empty list on error
+    }
+
+// Example print statements for debugging
+while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+{
+
+    struct Entity entity;
+    entity.entity_type = entity_type;
+
+    // Adjust the data retrieval based on the entity type
+    if (entity_type == TRANSACTION)
+    {
+        entity.transaction.id = sqlite3_column_int(stmt, 0);
+        entity.transaction.account_id = sqlite3_column_int(stmt, 1);
+
+        // Check for NULL value in 'price' column
+        if (sqlite3_column_type(stmt, 2) == SQLITE_NULL) {
+            entity.transaction.price = 0.0;  // Or set it to a default value
+        } else {
+            entity.transaction.price = sqlite3_column_double(stmt, 2);
+        }
+    }
+    else if (entity_type == ACCOUNT)
+    {
+        entity.account.id = sqlite3_column_int(stmt, 0);
+
+        // Check for NULL values in 'balance' column
+        if (sqlite3_column_type(stmt, 4) == SQLITE_NULL) {
+            entity.account.balance = 0;  // Or set it to a default value
+        } else {
+            entity.account.balance = sqlite3_column_int(stmt, 4);
+        }
+
+        // Note: Assuming 'name', 'mobile', and 'email_address' are TEXT fields
+        // Retrieve other fields for the User entity
+        const char *name = (const char *)sqlite3_column_text(stmt, 1);
+        const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
+        const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
+
+        // Check for NULL values and allocate memory only if not NULL
+        entity.account.name = (name != NULL) ? my_strdup(name) : NULL;
+        entity.account.mobile = (mobile != NULL) ? my_strdup(mobile) : NULL;
+        entity.account.email_address = (email_address != NULL) ? my_strdup(email_address) : NULL;
+    }
+    else
+    {
+        fprintf(stderr, "Invalid entity type\n");
+        return entityList; // Return an empty list for an invalid entity type
+    }
+
+    // Add the entity to the list
+    entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
+    entityList.entities[entityList.size++] = entity;
+
+}
+
+
+    if (rc != SQLITE_DONE && rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL execution error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(db);
+
+        // Free the allocated memory before returning
+        if (entityList.entities != NULL)
+        {
+            for (size_t i = 0; i < entityList.size; ++i)
+            {
+                if (entityList.entities[i].entity_type == ACCOUNT)
+                {
+                    if (entityList.entities[i].account.name != NULL)
+                    {
+                        free(entityList.entities[i].account.name);
+                    }
+                    if (entityList.entities[i].account.mobile != NULL)
+                    {
+                        free(entityList.entities[i].account.mobile);
+                    }
+                    if (entityList.entities[i].account.email_address != NULL)
+                    {
+                        free(entityList.entities[i].account.email_address);
+                    }
+                }
+            }
+            free(entityList.entities);
+        }
+
+        return entityList; // Return an empty list on error
+    }
+
+    sqlite3_finalize(stmt);
+    return entityList;
+}
+
+
+
 int delete(sqlite3 *db,int account_id)
 {
     char *err_msg = 0;
@@ -274,7 +398,7 @@ int edit(sqlite3 *db, struct Account editedAccount)
     if (rc != SQLITE_OK)
     {
         fprintf(stderr, "SQL prepare error (account update): %s\n", sqlite3_errmsg(db));
-        return 1;
+        return 0;
     }
 
     sqlite3_bind_int(stmt, 1, editedAccount.balance);
@@ -289,10 +413,10 @@ int edit(sqlite3 *db, struct Account editedAccount)
     {
         fprintf(stderr, "SQL execution error (account update): %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return 1;
+        return 0;
     }
 
     sqlite3_finalize(stmt);
 
-    return 0; // Success
+    return 1; // Success
 }
