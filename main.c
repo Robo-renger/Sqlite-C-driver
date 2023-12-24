@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "No command specified. Usage: ./main <command>\n");
     }
 
-    Withdraw(db);
+    Menu(db);
     // Close the SQLite database
     sqlite3_close(db);
 
