@@ -1,5 +1,7 @@
 #ifndef DATABASE_H
 #define DATABASE_H
+#include <sqlite3.h>
+#include <stddef.h> // Add this line
 
 struct Date
 {
@@ -50,6 +52,7 @@ struct Entity
 int createTable(sqlite3 *);
 int insert(sqlite3 *, struct Entity);
 struct EntityList get(sqlite3 *, int account_id, enum EntityType entity_type);
+struct EntityList getAll(sqlite3 *,enum EntityType entity_type);
 int delete(sqlite3 *, int account_id);
 int edit(sqlite3 *, struct Account);
 
