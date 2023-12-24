@@ -72,7 +72,8 @@ void Menu(sqlite3 *db)
     printf("Choose an option:\n");
     printf("1. Withdraw\n");
     printf("2. Deposit\n");
-    printf("3. Exit\n");
+    printf("3. Transfer\n");
+    printf("4. Quit\n");
     printf("Enter the number corresponding to your choice: ");
     scanf("%d", &choice);
 
@@ -85,6 +86,8 @@ void Menu(sqlite3 *db)
             Deposit(db);
             break;
         case 3:
+            Transfer(db);
+        case 4:
             exit(1);
         default:
             printf("Invalid choice, please try again.\n");
@@ -190,6 +193,85 @@ void Deposit(sqlite3 *db)
     account.balance += amount;
     int ed = edit(db,account);
     if (ed == 1)
+    {
+        printf("Transaction is completed successfully\n");
+        Menu(db);
+    }
+}
+
+void Transfer(sqlite3 *db)
+{
+    int sender_account_id,receiver_account_id;
+    double amount;
+
+    struct EntityList senderAccountList;
+    do
+    {
+        printf("Please, enter sender account number:");
+
+        while (scanf("%d", &sender_account_id) != 1)
+        {
+            while (getchar() != '\n');
+            printf("Invalid input for account number, please enter a valid number.\n");
+            printf("Please, enter sender account number:");
+        }
+
+        senderAccountList = get(db, sender_account_id, ACCOUNT);
+        if (senderAccountList.size == 0)
+            printf("Sender's account number not found, please try again.\n");
+
+    }while (senderAccountList.size == 0);
+    
+    struct EntityList receiverAccountList;
+    do
+    {
+        printf("Please, enter receiver account number:");
+
+        while (scanf("%d", &receiver_account_id) != 1)
+        {
+            while (getchar() != '\n');
+            printf("Invalid input for account number, please enter a valid number.\n");
+            printf("Please, enter receiver account number:");
+        }
+
+        receiverAccountList = get(db, receiver_account_id, ACCOUNT);
+        if (receiverAccountList.size == 0)
+            printf("Receiver's account number not found, please try again.\n");
+        
+        if (sender_account_id == receiver_account_id)
+        printf("Receiver's account number is the same as the sender account number, please try again.\n");
+
+    }while(receiverAccountList.size == 0 || sender_account_id == receiver_account_id);
+
+    struct Account sender = senderAccountList.entities[0].account;
+    struct Account receiver = receiverAccountList.entities[0].account;
+    if(sender.balance == 0)
+    {
+        printf("Transaction will not proceed as your balance is ZERO\n");
+        Menu(db);
+    }
+
+    printf("Enter the amount you want to transfer: ");
+    while (scanf("%lf",&amount) != 1)
+    {
+        while(getchar()!='\n');
+        printf("Invalid input for amount, please enter valid amount.\n");
+        printf("Enter the withdrawal amount: ");
+    }
+
+    while(amount > sender.balance)
+    {
+        printf("Transfer amount exceeds your current balance. Please enter a valid amount.\n");
+        printf("Enter the amount you want to transfer: ");
+        scanf("%lf", &amount);
+    }
+    
+    sender.balance -= amount;
+    receiver.balance += amount;
+
+    int s_ed = edit(db,sender);
+    int r_ed = edit(db,receiver);
+    if (s_ed == 1 && r_ed == 1)
     {
         printf("Transaction is completed successfully\n");
         Menu(db);
