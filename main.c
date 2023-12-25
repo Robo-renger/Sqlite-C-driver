@@ -18,23 +18,8 @@ int main(int argc, char *argv[]) {
         sqlite3_close(db);
         return 1;
     }
-
-    // Check if the program is called with an argument
-    if (argc > 1) {
-        // Check if the argument is "getAllAccounts"
-        if (strcmp(argv[1], "getAllAccounts") == 0) {
-            // Call the getAllAccounts function
-            getAllAccounts(db);
-        } else {
-            fprintf(stderr, "Unknown command: %s\n", argv[1]);
-        }
-    } else {
-        fprintf(stderr, "No command specified. Usage: ./main <command>\n");
-    }
-
-    Menu(db);
-    // Close the SQLite database
-    sqlite3_close(db);
-
-    return 0;
+    createTable(db);
+    // createAccount(db);
+    // Withdraw(db);
+    // getTransactions(db);
 }

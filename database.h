@@ -14,11 +14,13 @@ struct Transaction
     int id;
     int account_id;
     float price;
+    char *type;
 };
 
 struct Account
 {
     int id;
+    long account_number;
     int balance;
     char *name;
     char *mobile;

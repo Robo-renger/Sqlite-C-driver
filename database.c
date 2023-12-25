@@ -20,25 +20,27 @@ char *my_strdup(const char *s)
 int createTable(sqlite3 *db)
 {
     char *err_msg;
-
-    const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
+const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
+    account_number TEXT DEFAULT (strftime('%Y%m%d', 'now', 'localtime') || '-' || CAST(id AS TEXT))\
     name TEXT,\
     mobile TEXT,\
     email_address TEXT,\
     balance FLOAT,\
-    date_opened TEXT\
+    date_opened TEXT,\
 );\
 CREATE TABLE IF NOT EXISTS transactions (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
     account_id INTEGER,\
-    price FLOAT\
+    price FLOAT,\
+    type TEXT\
 );\
 CREATE TABLE IF NOT EXISTS users (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
     username TEXT,\
     password TEXT\
 );";
+
 
     char sql[500]; // Adjust the size based on your SQL statement
     strcpy(sql, create_table_sql);
@@ -79,7 +81,7 @@ int insert(sqlite3 *db, struct Entity entity)
     }
     else if (entity.entity_type == TRANSACTION)
     {
-        const char *sql = "INSERT INTO transactions (account_id,price) VALUES (?,?);";
+        const char *sql = "INSERT INTO transactions (account_id,price,type) VALUES (?,?,?);";
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
         if (rc != SQLITE_OK)
         {
@@ -89,6 +91,7 @@ int insert(sqlite3 *db, struct Entity entity)
         }
         sqlite3_bind_int(stmt, 1, entity.transaction.account_id);
         sqlite3_bind_double(stmt, 2, entity.transaction.price);
+        sqlite3_bind_text(stmt, 3, entity.transaction.type,-1,SQLITE_STATIC);
     }
     rc = sqlite3_step(stmt);
 
