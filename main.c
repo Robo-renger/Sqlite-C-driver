@@ -18,10 +18,18 @@ int main(int argc, char *argv[]) {
         sqlite3_close(db);
         return 1;
     }
-    createTable(db);
+    // createTable(db);
     // createAccount(db);
+    struct User user;
+    user.username = "lhosh";
+    user.password = "lhosh_awy";
+    if(login(db,user)){
+        printf("Logged in successfuly");
+    }else{
+        printf("Please enter a valid username and password");
+    }
     // Withdraw(db);
     // getTransactions(db);
-    createTable(db);
-    Menu(db);
+    // createTable(db);
+    // Menu(db);
 }

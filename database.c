@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS transactions (\
 );\
 CREATE TABLE IF NOT EXISTS users (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
-    username TEXT,\
-    password TEXT\
+    username TEXT UNIQUE,\
+    password TEXT UNIQUE\
 );";
 
 
@@ -425,4 +425,41 @@ int edit(sqlite3 *db, struct Account editedAccount)
     sqlite3_finalize(stmt);
 
     return 1; // Success
+}
+
+int login(sqlite3 *db, struct User user) {
+    char *err_msg = 0;
+
+    // Build the SQL query
+    const char *sql = "SELECT id FROM users WHERE username = ? AND password = ?";
+    sqlite3_stmt *stmt;
+
+    // Prepare the SQL query
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
+        return 0; // Return 0 on error
+    }
+
+    // Bind the parameters (username and password)
+    sqlite3_bind_text(stmt, 1, user.username, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, user.password, -1, SQLITE_STATIC);
+
+    // Execute the query
+    rc = sqlite3_step(stmt);
+
+    if (rc == SQLITE_ROW) {
+        // User with the given username and password exists
+        int user_id = sqlite3_column_int(stmt, 0);
+        sqlite3_finalize(stmt);
+        return 1; // Return 1 if login successful
+    } else if (rc != SQLITE_DONE) {
+        // Error during execution
+        fprintf(stderr, "SQL execution error: %s\n", sqlite3_errmsg(db));
+    }
+
+    // Finalize the statement and return 0 (login failed)
+    sqlite3_finalize(stmt);
+    return 0;
 }
