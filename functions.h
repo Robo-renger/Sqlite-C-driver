@@ -6,6 +6,8 @@
 
 void freeEntityList(struct EntityList *entityList);
 
+void createAccount(sqlite3* db);
+
 void getAllAccounts(sqlite3* db);
 
 void Menu(sqlite3 *db);
@@ -16,6 +18,7 @@ void Deposit(sqlite3 *db);
 
 void Transfer(sqlite3 *db);
 
+void getTransactions(sqlite3 *db);
 void Print(struct EntityList *entityList);
 
 void SortByName(struct EntityList *entityList);
