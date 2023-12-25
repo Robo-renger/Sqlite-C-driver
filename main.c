@@ -19,5 +19,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     createTable(db);
+    // createAccount(db);
+    // Withdraw(db);
+    // getTransactions(db);
+    createTable(db);
     Menu(db);
 }

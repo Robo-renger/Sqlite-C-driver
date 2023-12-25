@@ -8,6 +8,8 @@ void freeEntityList(struct EntityList *entityList);
 
 void createAccount(sqlite3* db);
 
+void createAccount(sqlite3* db);
+
 void getAllAccounts(sqlite3* db);
 
 int generateUniqueID(const struct Account *account);
@@ -24,6 +26,7 @@ void Transfer(sqlite3 *db);
 
 void getAllTransactions(sqlite3 *db);
 
+void getTransactions(sqlite3 *db);
 void Print(struct EntityList *entityList);
 
 void SortByName(struct EntityList *entityList);

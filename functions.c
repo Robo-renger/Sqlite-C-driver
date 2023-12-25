@@ -9,6 +9,7 @@
 
 #define MAX_LENGTH 100
 
+
 int generateUniqueID(const struct Account *account)
 {
     return account->id * 10000 + account->date_opened.year * 100 + account->date_opened.month;
