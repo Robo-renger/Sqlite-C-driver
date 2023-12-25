@@ -22,6 +22,6 @@ void SortByName(struct EntityList *entityList);
 
 void SortByBalance(struct EntityList *entityList);
 
-void SortByDate(struct EntityList *entityList);
+void SortByDate(struct EntityList *entityList); 
 
 #endif  

@@ -346,7 +346,7 @@ void SortByName(struct EntityList *entityList)
         printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month, entityList->entities[i].account.date_opened.year);
         printf("\n");
     }
-}
+} 
 
 
 void SortByBalance(struct EntityList *entityList)
