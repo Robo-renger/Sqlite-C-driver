@@ -20,14 +20,7 @@ int main(int argc, char *argv[]) {
     }
     // createTable(db);
     // createAccount(db);
-    struct User user;
-    user.username = "lhosh";
-    user.password = "lhosh_awy";
-    if(login(db,user)){
-        printf("Logged in successfuly");
-    }else{
-        printf("Please enter a valid username and password");
-    }
+    loginUser(db);
     // Withdraw(db);
     // getTransactions(db);
     // createTable(db);

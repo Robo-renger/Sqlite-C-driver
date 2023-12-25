@@ -550,3 +550,40 @@ void SortByDate(struct EntityList *entityList,sqlite3 *db)
     }
     Menu(db);    
 }
+int loginUser(sqlite3*db){
+    char username[MAX_LENGTH];
+    char password[MAX_LENGTH];
+
+    struct User user;
+
+    printf("Please Enter your username: ");
+    if (fgets(username, sizeof(username), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    size_t len = strlen(username);
+    if (len > 0 && username[len - 1] == '\n')
+    {
+        username[len - 1] = '\0';
+    }
+    printf("Please Enter your password: ");
+    if (fgets(password, sizeof(password), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    len = strlen(password);
+    if (len > 0 && password[len - 1] == '\n')
+    {
+        password[len - 1] = '\0';
+    }
+    user.username = username;
+    user.password = password;
+    if(login(db,user)){
+        printf("Logged in successfuly\n");
+    }else{
+        printf("Invalid uername or password\n");
+        loginUser(db);
+    }
+}
