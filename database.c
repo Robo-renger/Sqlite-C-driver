@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-
 #define MAX_LENGTH 100
 
 char *my_strdup(const char *s)
@@ -24,6 +23,7 @@ int createTable(sqlite3 *db)
     char *err_msg;
     const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
+    account_number INTEGER,\
     name TEXT,\
     mobile TEXT,\
     email_address TEXT,\
@@ -399,7 +399,7 @@ int edit(sqlite3 *db, struct Account editedAccount)
     int rc;
 
     // Update the account record in the "accounts" table
-    const char *update_account_sql = "UPDATE accounts SET balance = ?, name = ?, mobile = ?, email_address = ? WHERE id = ?";
+    const char *update_account_sql = "UPDATE accounts SET account_number = ? WHERE id = ?";
     rc = sqlite3_prepare_v2(db, update_account_sql, -1, &stmt, 0);
 
     if (rc != SQLITE_OK)
@@ -408,11 +408,8 @@ int edit(sqlite3 *db, struct Account editedAccount)
         return 0;
     }
 
-    sqlite3_bind_int(stmt, 1, editedAccount.balance);
-    sqlite3_bind_text(stmt, 2, editedAccount.name, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 3, editedAccount.mobile, -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 4, editedAccount.email_address, -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 5, editedAccount.id);
+    sqlite3_bind_int64(stmt, 1, editedAccount.account_number);
+    sqlite3_bind_int(stmt, 2, editedAccount.id); 
 
     rc = sqlite3_step(stmt);
 
@@ -622,4 +619,51 @@ struct EntityList searchColumn(sqlite3 *db, const char *column, const char *keyw
 
     sqlite3_finalize(stmt);
     return resultList;
+}
+struct Account getLastInsertedAccount(sqlite3 *db)
+{
+    struct Account account;
+
+    // Construct the SQL statement
+    const char *sql = "SELECT * FROM accounts ORDER BY id DESC LIMIT 1";
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
+        // Handle the error as needed
+        exit(EXIT_FAILURE);
+    }
+
+    // Execute the SQL statement
+    rc = sqlite3_step(stmt);
+
+    if (rc == SQLITE_ROW)
+    {
+        // Retrieve values from the result set
+        account.id = sqlite3_column_int(stmt, 0);
+        account.account_number = sqlite3_column_int(stmt, 1);
+        account.balance = sqlite3_column_int(stmt, 2);
+
+        // Retrieve strings, make sure to free them later
+        account.name = my_strdup((const char *)sqlite3_column_text(stmt, 3));
+        account.mobile = my_strdup((const char *)sqlite3_column_text(stmt, 4));
+        account.email_address = my_strdup((const char *)sqlite3_column_text(stmt, 5));
+
+        // Retrieve date_opened
+        sscanf((const char *)sqlite3_column_text(stmt, 6), "%d-%d", &account.date_opened.month, &account.date_opened.year);
+    }
+    else
+    {
+        fprintf(stderr, "No records found.\n");
+        // Handle the case when no records are found
+        exit(EXIT_FAILURE);
+    }
+
+    // Finalize the statement
+    sqlite3_finalize(stmt);
+
+    return account;
 }

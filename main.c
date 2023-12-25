@@ -21,15 +21,24 @@ int main(int argc, char *argv[])
         return 1;
     }
     // createTable(db);
-    // createAccount(db);
+    createAccount(db);
     // loginUser(db);
     // Withdraw(db);
     // getTransactions(db);
     // createTable(db);
     // Menu(db);
-    regularSearch(db);
+    // struct Account account;
+    // struct Date account_date;
+    // account_date.year = 2023;
+    // account_date.month = 2; // Set month to 2 for February
+    // account.id = 22;
+    // account.name = "adsas";
+    // account.date_opened = account_date;
 
-    
+    // long account_number = generateAccountNumber(&account);
+    // printf("%ld", account_number);
+
+    // regularSearch(db);
 
     // Close the SQLite database
     sqlite3_close(db);

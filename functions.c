@@ -6,12 +6,24 @@
 #include <sqlite3.h>
 #include <stddef.h>
 #include <time.h>
-    
+
 #define MAX_LENGTH 100
 
-int generateUniqueID(const struct Account *account)
+long generateAccountNumber(struct Account *account)
 {
-    return account->id * 10000 + account->date_opened.year * 100 + account->date_opened.month;
+    // Extract year, month, and id
+    int year = account->date_opened.year;
+    int month = account->date_opened.month;
+    int id = account->id;
+
+    printf("Debug: year=%d, month=%d, id=%d\n", year, month, id); // Debugging line
+
+    // Check if the year and month match the specified criteria (2023 and 02)
+
+    // Combine the year, month, and id to create a unique number
+    long uniqueNumber = ((long)year * 10000000000) + ((long)month * 100000000) + id;
+
+    return uniqueNumber;
 }
 
 void getCurrentDate(struct Date *currentDate)
@@ -67,7 +79,6 @@ void createAccount(sqlite3 *db)
 
     getCurrentDate(&currentDate);
 
-    getchar();
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
     {
@@ -127,6 +138,10 @@ void createAccount(sqlite3 *db)
     accountEntity.account.balance = balance;
     accountEntity.account.date_opened = currentDate;
     insert(db, accountEntity);
+    struct Account lastAccount = getLastInsertedAccount(db);
+    lastAccount.account_number = generateAccountNumber(&lastAccount);
+    printf("%ld", lastAccount.account_number);
+    edit(db, lastAccount);
 }
 
 void getAllTransactions(sqlite3 *db)
