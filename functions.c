@@ -184,25 +184,25 @@ void Menu(sqlite3 *db)
 
     switch (choice)
     {
-    case 1:
-        Withdraw(db);
-        break;
-    case 2:
-        Deposit(db);
-        break;
-    case 3:
-        Transfer(db);
+        case 1:
+            Withdraw(db);
             break;
-    case 4:
+        case 2:
+            Deposit(db);
+            break;
+        case 3:
+            Transfer(db);
+            break;
+        case 4:
             accountList = getAll(db, ACCOUNT);
             Print(&accountList);
             freeEntityList(&accountList);
             break;
         case 5:
-        exit(1);
-    default:
-        printf("Invalid choice, please try again.\n");
-        Menu(db);
+            exit(1);
+        default:
+            printf("Invalid choice, please try again.\n");
+            Menu(db);
     }
 }
 
@@ -397,5 +397,125 @@ void Transfer(sqlite3 *db)
         freeEntityList(&senderAccountList);
         freeEntityList(&receiverAccountList);
         Menu(db);
+    }
+}
+
+void Print(struct EntityList *entityList)
+{
+    int choice;
+    printf("Choose a sorting option:\n");
+    printf("1. Sort by name\n");
+    printf("2. Sort by balance\n");
+    printf("3. Sort by date\n");
+    printf("Enter the number corresponding to your choice: ");
+    scanf("%d", &choice);
+
+    switch(choice)
+    {
+        case 1:
+            SortByName(entityList);
+            break;
+        case 2:
+            SortByBalance(entityList);
+            break;
+        case 3:
+            SortByDate(entityList);
+            break;
+        default:
+            printf("Invalid choice, please try again.\n");
+            Print(entityList);
+    }
+
+}
+
+void SortByName(struct EntityList *entityList)
+{
+    for(int i=0; i < entityList->size -1;i++)
+    {
+        for(int j=0; j < entityList->size - i - 1;j++)
+        {
+            if(strcmp(entityList->entities[j].account.name,entityList->entities[j+1].account.name)>0)
+            {
+                struct Entity temp = entityList->entities[j+1];
+                entityList->entities[j+1] = entityList->entities[j];
+                entityList->entities[j] = temp;
+            }
+        }
+    }
+
+    printf("Sorted Account List (Sorted by Name):\n");
+    for (size_t i = 0; i < entityList->size; i++)
+    {
+        printf("Account Number: %d\n", entityList->entities[i].account.id);
+        printf("Name: %s\n", entityList->entities[i].account.name);
+        printf("Email: %s\n", entityList->entities[i].account.email_address);
+        printf("Balance: %d\n", entityList->entities[i].account.balance);
+        printf("Mobile: %s\n", entityList->entities[i].account.mobile);
+        printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month, entityList->entities[i].account.date_opened.year);
+        printf("\n");
+    }
+} 
+
+
+void SortByBalance(struct EntityList *entityList)
+{
+    for (int i = 0; i < entityList->size - 1; i++)
+    {
+        for (int j = 0; j < entityList->size - i - 1; j++)
+        {
+            if (entityList->entities[j].account.balance > entityList->entities[j + 1].account.balance)
+            {
+                struct Entity temp = entityList->entities[j + 1];
+                entityList->entities[j + 1] = entityList->entities[j];
+                entityList->entities[j] = temp;
+            }
+        }
+    }
+
+    printf("Sorted Account List (Sorted by Balance):\n");
+    for (size_t i = 0; i < entityList->size; i++)
+    {
+        printf("Account Number: %d\n", entityList->entities[i].account.id);
+        printf("Name: %s\n", entityList->entities[i].account.name);
+        printf("Email: %s\n", entityList->entities[i].account.email_address);
+        printf("Balance: %d\n", entityList->entities[i].account.balance);
+        printf("Mobile: %s\n", entityList->entities[i].account.mobile);
+        printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month, entityList->entities[i].account.date_opened.year);
+        printf("\n");
+    }
+}
+
+void SortByDate(struct EntityList *entityList)
+{
+    for (int i = 0; i < entityList->size - 1; i++)
+    {
+        for (int j = 0; j < entityList->size - i - 1; j++)
+        {
+            int date1 = entityList->entities[j].account.date_opened.year * 100 +
+                        entityList->entities[j].account.date_opened.month;
+
+            int date2 = entityList->entities[j + 1].account.date_opened.year * 100 +
+                        entityList->entities[j + 1].account.date_opened.month;
+
+            if (date1 > date2)
+            {
+                struct Entity temp = entityList->entities[j + 1];
+                entityList->entities[j + 1] = entityList->entities[j];
+                entityList->entities[j] = temp;
+            }
+        }
+    }
+
+    printf("Sorted Account List (Sorted by Date):\n");
+    for (size_t i = 0; i < entityList->size; i++)
+    {
+        printf("Account Number: %d\n", entityList->entities[i].account.id);
+        printf("Name: %s\n", entityList->entities[i].account.name);
+        printf("Email: %s\n", entityList->entities[i].account.email_address);
+        printf("Balance: %d\n", entityList->entities[i].account.balance);
+        printf("Mobile: %s\n", entityList->entities[i].account.mobile);
+        printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month,
+               entityList->entities[i].account.date_opened.year);
+        printf("\n");
     }
 }
