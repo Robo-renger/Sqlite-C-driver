@@ -9,7 +9,6 @@
 
 #define MAX_LENGTH 100
 
-
 int generateUniqueID(const struct Account *account)
 {
     return account->id * 10000 + account->date_opened.year * 100 + account->date_opened.month;
@@ -64,7 +63,7 @@ void createAccount(sqlite3 *db)
 
     getCurrentDate(&currentDate);
 
-
+    getchar();
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
     {
@@ -174,31 +173,45 @@ void Menu(sqlite3 *db)
 
     int choice;
     printf("Choose an option:\n");
-    printf("1. Withdraw\n");
-    printf("2. Deposit\n");
-    printf("3. Transfer\n");
-    printf("4. Print\n");
-    printf("5. Quit\n");
+    printf("1. Add\n");
+    printf("2. Delete\n");
+    printf("3. Modify\n");
+    printf("4. Search\n");
+    printf("5. Advanced Search\n");
+    printf("6. Withdraw\n");
+    printf("7. Deposit\n");
+    printf("8. Transfer\n");
+    printf("9. Report\n");
+    printf("10. Print\n");
+    printf("11. Quit\n");
     printf("Enter the number corresponding to your choice: ");
-    scanf("%d", &choice);
+    if (scanf("%d", &choice) != 1)
+    {
+        printf("Invalid input. Please enter a valid integer.\n");
+        while (getchar() != '\n');
+        Menu(db);
+    }
 
     switch (choice)
     {
         case 1:
+            createAccount(db);
+            break;
+        case 6:
             Withdraw(db);
             break;
-        case 2:
+        case 7:
             Deposit(db);
             break;
-        case 3:
+        case 8:
             Transfer(db);
             break;
-        case 4:
+        case 10:
             accountList = getAll(db, ACCOUNT);
-            Print(&accountList);
+            Print(&accountList,db);
             freeEntityList(&accountList);
             break;
-        case 5:
+        case 11:
             exit(1);
         default:
             printf("Invalid choice, please try again.\n");
@@ -206,6 +219,12 @@ void Menu(sqlite3 *db)
     }
 }
 
+/*
+void Save(sqlite3 *db,struct Account)
+{
+
+}
+*/
 void Withdraw(sqlite3 *db)
 {
     int account_id;
@@ -400,7 +419,7 @@ void Transfer(sqlite3 *db)
     }
 }
 
-void Print(struct EntityList *entityList)
+void Print(struct EntityList *entityList,sqlite3 *db)
 {
     int choice;
     printf("Choose a sorting option:\n");
@@ -408,27 +427,32 @@ void Print(struct EntityList *entityList)
     printf("2. Sort by balance\n");
     printf("3. Sort by date\n");
     printf("Enter the number corresponding to your choice: ");
-    scanf("%d", &choice);
+    if (scanf("%d", &choice) != 1)
+    {
+        printf("Invalid input. Please enter a valid integer.\n");
+        while (getchar() != '\n');
+        Print(entityList, db);
+    }
 
     switch(choice)
     {
         case 1:
-            SortByName(entityList);
+            SortByName(entityList,db);
             break;
         case 2:
-            SortByBalance(entityList);
+            SortByBalance(entityList,db);
             break;
         case 3:
-            SortByDate(entityList);
+            SortByDate(entityList,db);
             break;
         default:
             printf("Invalid choice, please try again.\n");
-            Print(entityList);
+            Print(entityList,db);
     }
 
 }
 
-void SortByName(struct EntityList *entityList)
+void SortByName(struct EntityList *entityList,sqlite3 *db)
 {
     for(int i=0; i < entityList->size -1;i++)
     {
@@ -451,13 +475,14 @@ void SortByName(struct EntityList *entityList)
         printf("Email: %s\n", entityList->entities[i].account.email_address);
         printf("Balance: %d\n", entityList->entities[i].account.balance);
         printf("Mobile: %s\n", entityList->entities[i].account.mobile);
-        printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month, entityList->entities[i].account.date_opened.year);
-        printf("\n");
+        const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month-1], entityList->entities[i].account.date_opened.year);        printf("\n");
     }
+    Menu(db);
 } 
 
 
-void SortByBalance(struct EntityList *entityList)
+void SortByBalance(struct EntityList *entityList,sqlite3 *db)
 {
     for (int i = 0; i < entityList->size - 1; i++)
     {
@@ -480,21 +505,25 @@ void SortByBalance(struct EntityList *entityList)
         printf("Email: %s\n", entityList->entities[i].account.email_address);
         printf("Balance: %d\n", entityList->entities[i].account.balance);
         printf("Mobile: %s\n", entityList->entities[i].account.mobile);
-        printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month, entityList->entities[i].account.date_opened.year);
+        const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month-1], entityList->entities[i].account.date_opened.year);
         printf("\n");
     }
+    Menu(db);
 }
 
-void SortByDate(struct EntityList *entityList)
+void SortByDate(struct EntityList *entityList,sqlite3 *db)
 {
     for (int i = 0; i < entityList->size - 1; i++)
     {
         for (int j = 0; j < entityList->size - i - 1; j++)
         {
-            int date1 = entityList->entities[j].account.date_opened.year * 100 +
+            int date1 = entityList->entities[j].account.date_opened.year*10
+                        +    
                         entityList->entities[j].account.date_opened.month;
 
-            int date2 = entityList->entities[j + 1].account.date_opened.year * 100 +
+            int date2 = entityList->entities[j + 1].account.date_opened.year*10 
+                        +
                         entityList->entities[j + 1].account.date_opened.month;
 
             if (date1 > date2)
@@ -514,8 +543,10 @@ void SortByDate(struct EntityList *entityList)
         printf("Email: %s\n", entityList->entities[i].account.email_address);
         printf("Balance: %d\n", entityList->entities[i].account.balance);
         printf("Mobile: %s\n", entityList->entities[i].account.mobile);
-        printf("Date Opened: %d/%d\n", entityList->entities[i].account.date_opened.month,
-               entityList->entities[i].account.date_opened.year);
+
+        const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month-1], entityList->entities[i].account.date_opened.year);
         printf("\n");
     }
+    Menu(db);    
 }

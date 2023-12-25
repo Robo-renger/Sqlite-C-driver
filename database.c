@@ -26,7 +26,7 @@ const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
     mobile TEXT,\
     email_address TEXT,\
     balance FLOAT,\
-    date_opened TEXT,\
+    date_opened TEXT\
 );\
 CREATE TABLE IF NOT EXISTS transactions (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
@@ -265,10 +265,14 @@ while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
         entity.account.id = sqlite3_column_int(stmt, 0);
 
         // Check for NULL values in 'balance' column
-        if (sqlite3_column_type(stmt, 4) == SQLITE_NULL) {
+        if (sqlite3_column_type(stmt, 4) == SQLITE_NULL || sqlite3_column_type(stmt, 5) == SQLITE_NULL) {
             entity.account.balance = 0;  // Or set it to a default value
+            entity.account.date_opened.month = 1;
+            entity.account.date_opened.year = 2000;
         } else {
             entity.account.balance = sqlite3_column_int(stmt, 4);
+            const char *dateOpened = (const char *)sqlite3_column_text(stmt, 5);
+            sscanf(dateOpened, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
         }
 
         // Note: Assuming 'name', 'mobile', and 'email_address' are TEXT fields
