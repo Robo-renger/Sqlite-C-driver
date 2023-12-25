@@ -7,7 +7,8 @@ function makeAjaxRequest() {
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4 && xhr.status == 200) {
             var response = JSON.parse(xhr.responseText);
-            document.getElementById("accountTable").innerHTML = "Output: " + response.output;
+            console.log(xhr.responseText)
+            document.getElementById("accountTable").innerHTML = response.output;
         } else if (xhr.readyState == 4 && xhr.status != 200) {
             document.getElementById("result").innerHTML = "Error: " + xhr.status;
         }
