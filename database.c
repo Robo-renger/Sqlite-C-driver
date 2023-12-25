@@ -22,7 +22,6 @@ int createTable(sqlite3 *db)
     char *err_msg;
 const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
-    account_number TEXT DEFAULT (strftime('%Y%m%d', 'now', 'localtime') || '-' || CAST(id AS TEXT))\
     name TEXT,\
     mobile TEXT,\
     email_address TEXT,\
