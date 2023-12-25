@@ -6,7 +6,13 @@
 
 void freeEntityList(struct EntityList *entityList);
 
+void createAccount(sqlite3* db);
+
 void getAllAccounts(sqlite3* db);
+
+int generateUniqueID(const struct Account *account);
+
+void getCurrentDate(struct Date *currentDate);
 
 void Menu(sqlite3 *db);
 
@@ -15,6 +21,8 @@ void Withdraw(sqlite3 *db);
 void Deposit(sqlite3 *db);
 
 void Transfer(sqlite3 *db);
+
+void getAllTransactions(sqlite3 *db);
 
 void Print(struct EntityList *entityList);
 
