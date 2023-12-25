@@ -38,4 +38,7 @@ void SortByDate(struct EntityList *entityList,sqlite3 *db);
 
 int loginUser(sqlite3* db);
 
+void advancedSearch(sqlite3*db);
+void regularSearch(sqlite3 *db);
+
 #endif  

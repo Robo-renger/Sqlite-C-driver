@@ -5,7 +5,9 @@
 #include "database.h"
 #include <stdlib.h>
 #include <string.h>
-#include <stddef.h> 
+#include <stddef.h>
+
+#define MAX_LENGTH 100
 
 char *my_strdup(const char *s)
 {
@@ -20,7 +22,7 @@ char *my_strdup(const char *s)
 int createTable(sqlite3 *db)
 {
     char *err_msg;
-const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
+    const char *create_table_sql = "CREATE TABLE IF NOT EXISTS accounts (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
     name TEXT,\
     mobile TEXT,\
@@ -39,7 +41,6 @@ CREATE TABLE IF NOT EXISTS users (\
     username TEXT UNIQUE,\
     password TEXT UNIQUE\
 );";
-
 
     char sql[500]; // Adjust the size based on your SQL statement
     strcpy(sql, create_table_sql);
@@ -90,7 +91,7 @@ int insert(sqlite3 *db, struct Entity entity)
         }
         sqlite3_bind_int(stmt, 1, entity.transaction.account_id);
         sqlite3_bind_double(stmt, 2, entity.transaction.price);
-        sqlite3_bind_text(stmt, 3, entity.transaction.type,-1,SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 3, entity.transaction.type, -1, SQLITE_STATIC);
     }
     rc = sqlite3_step(stmt);
 
@@ -104,8 +105,6 @@ int insert(sqlite3 *db, struct Entity entity)
     sqlite3_finalize(stmt);
     return 0;
 }
-
-
 
 struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
 {
@@ -219,8 +218,8 @@ struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
     sqlite3_stmt *stmt;
     int rc;
 
-    const char *tableName = (entity_type == TRANSACTION) ? "Transactions" : 
-                                               (entity_type == ACCOUNT) ? "accounts" : NULL;
+    const char *tableName = (entity_type == TRANSACTION) ? "Transactions" : (entity_type == ACCOUNT) ? "accounts"
+                                                                                                     : NULL;
 
     if (tableName == NULL)
     {
@@ -240,64 +239,68 @@ struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
         return entityList; // Return an empty list on error
     }
 
-// Example print statements for debugging
-while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
-{
-
-    struct Entity entity;
-    entity.entity_type = entity_type;
-
-    // Adjust the data retrieval based on the entity type
-    if (entity_type == TRANSACTION)
+    // Example print statements for debugging
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
-        entity.transaction.id = sqlite3_column_int(stmt, 0);
-        entity.transaction.account_id = sqlite3_column_int(stmt, 1);
 
-        // Check for NULL value in 'price' column
-        if (sqlite3_column_type(stmt, 2) == SQLITE_NULL) {
-            entity.transaction.price = 0.0;  // Or set it to a default value
-        } else {
-            entity.transaction.price = sqlite3_column_double(stmt, 2);
+        struct Entity entity;
+        entity.entity_type = entity_type;
+
+        // Adjust the data retrieval based on the entity type
+        if (entity_type == TRANSACTION)
+        {
+            entity.transaction.id = sqlite3_column_int(stmt, 0);
+            entity.transaction.account_id = sqlite3_column_int(stmt, 1);
+
+            // Check for NULL value in 'price' column
+            if (sqlite3_column_type(stmt, 2) == SQLITE_NULL)
+            {
+                entity.transaction.price = 0.0; // Or set it to a default value
+            }
+            else
+            {
+                entity.transaction.price = sqlite3_column_double(stmt, 2);
+            }
         }
-    }
-    else if (entity_type == ACCOUNT)
-    {
-        entity.account.id = sqlite3_column_int(stmt, 0);
+        else if (entity_type == ACCOUNT)
+        {
+            entity.account.id = sqlite3_column_int(stmt, 0);
 
-        // Check for NULL values in 'balance' column
-        if (sqlite3_column_type(stmt, 4) == SQLITE_NULL || sqlite3_column_type(stmt, 5) == SQLITE_NULL) {
-            entity.account.balance = 0;  // Or set it to a default value
-            entity.account.date_opened.month = 1;
-            entity.account.date_opened.year = 2000;
-        } else {
-            entity.account.balance = sqlite3_column_int(stmt, 4);
-            const char *dateOpened = (const char *)sqlite3_column_text(stmt, 5);
-            sscanf(dateOpened, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
+            // Check for NULL values in 'balance' column
+            if (sqlite3_column_type(stmt, 4) == SQLITE_NULL || sqlite3_column_type(stmt, 5) == SQLITE_NULL)
+            {
+                entity.account.balance = 0; // Or set it to a default value
+                entity.account.date_opened.month = 1;
+                entity.account.date_opened.year = 2000;
+            }
+            else
+            {
+                entity.account.balance = sqlite3_column_int(stmt, 4);
+                const char *dateOpened = (const char *)sqlite3_column_text(stmt, 5);
+                sscanf(dateOpened, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
+            }
+
+            // Note: Assuming 'name', 'mobile', and 'email_address' are TEXT fields
+            // Retrieve other fields for the User entity
+            const char *name = (const char *)sqlite3_column_text(stmt, 1);
+            const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
+            const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
+
+            // Check for NULL values and allocate memory only if not NULL
+            entity.account.name = (name != NULL) ? my_strdup(name) : NULL;
+            entity.account.mobile = (mobile != NULL) ? my_strdup(mobile) : NULL;
+            entity.account.email_address = (email_address != NULL) ? my_strdup(email_address) : NULL;
+        }
+        else
+        {
+            fprintf(stderr, "Invalid entity type\n");
+            return entityList; // Return an empty list for an invalid entity type
         }
 
-        // Note: Assuming 'name', 'mobile', and 'email_address' are TEXT fields
-        // Retrieve other fields for the User entity
-        const char *name = (const char *)sqlite3_column_text(stmt, 1);
-        const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
-        const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
-
-        // Check for NULL values and allocate memory only if not NULL
-        entity.account.name = (name != NULL) ? my_strdup(name) : NULL;
-        entity.account.mobile = (mobile != NULL) ? my_strdup(mobile) : NULL;
-        entity.account.email_address = (email_address != NULL) ? my_strdup(email_address) : NULL;
+        // Add the entity to the list
+        entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
+        entityList.entities[entityList.size++] = entity;
     }
-    else
-    {
-        fprintf(stderr, "Invalid entity type\n");
-        return entityList; // Return an empty list for an invalid entity type
-    }
-
-    // Add the entity to the list
-    entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
-    entityList.entities[entityList.size++] = entity;
-
-}
-
 
     if (rc != SQLITE_DONE && rc != SQLITE_OK)
     {
@@ -336,9 +339,7 @@ while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     return entityList;
 }
 
-
-
-int delete(sqlite3 *db,int account_id)
+int delete(sqlite3 *db, int account_id)
 {
     char *err_msg = 0;
 
@@ -427,7 +428,8 @@ int edit(sqlite3 *db, struct Account editedAccount)
     return 1; // Success
 }
 
-int login(sqlite3 *db, struct User user) {
+int login(sqlite3 *db, struct User user)
+{
     char *err_msg = 0;
 
     // Build the SQL query
@@ -437,7 +439,8 @@ int login(sqlite3 *db, struct User user) {
     // Prepare the SQL query
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
 
-    if (rc != SQLITE_OK) {
+    if (rc != SQLITE_OK)
+    {
         fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
         return 0; // Return 0 on error
     }
@@ -449,12 +452,15 @@ int login(sqlite3 *db, struct User user) {
     // Execute the query
     rc = sqlite3_step(stmt);
 
-    if (rc == SQLITE_ROW) {
+    if (rc == SQLITE_ROW)
+    {
         // User with the given username and password exists
         int user_id = sqlite3_column_int(stmt, 0);
         sqlite3_finalize(stmt);
         return 1; // Return 1 if login successful
-    } else if (rc != SQLITE_DONE) {
+    }
+    else if (rc != SQLITE_DONE)
+    {
         // Error during execution
         fprintf(stderr, "SQL execution error: %s\n", sqlite3_errmsg(db));
     }
@@ -462,4 +468,158 @@ int login(sqlite3 *db, struct User user) {
     // Finalize the statement and return 0 (login failed)
     sqlite3_finalize(stmt);
     return 0;
+}
+struct EntityList searchAccounts(sqlite3 *db, const char *keyword)
+{
+    struct EntityList resultList = {.entities = NULL, .size = 0};
+
+    // Add '%' wildcards around the keyword
+    char *searchKeyword = sqlite3_mprintf("%%%s%%", keyword);
+
+    const char *sql = "SELECT * FROM accounts WHERE name LIKE ? COLLATE NOCASE OR mobile LIKE ? COLLATE NOCASE OR email_address LIKE ? COLLATE NOCASE OR date_opened LIKE ? COLLATE NOCASE";
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
+        sqlite3_free(searchKeyword);
+        return resultList; // Return an empty list on error
+    }
+
+    // Bind the keyword to the SQL statement
+    rc = sqlite3_bind_text(stmt, 1, searchKeyword, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL bind error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_free(searchKeyword);
+        return resultList; // Return an empty list on error
+    }
+
+    rc = sqlite3_bind_text(stmt, 2, searchKeyword, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL bind error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_free(searchKeyword);
+        return resultList; // Return an empty list on error
+    }
+
+    rc = sqlite3_bind_text(stmt, 3, searchKeyword, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL bind error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_free(searchKeyword);
+        return resultList; // Return an empty list on error
+    }
+
+    rc = sqlite3_bind_text(stmt, 4, searchKeyword, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL bind error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_free(searchKeyword);
+        return resultList; // Return an empty list on error
+    }
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        struct Entity entity;
+        entity.entity_type = ACCOUNT;
+
+        entity.account.id = sqlite3_column_int(stmt, 0);
+        const char *name = (const char *)sqlite3_column_text(stmt, 1);
+        const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
+        const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
+        entity.account.balance = sqlite3_column_int(stmt, 4);
+
+        const char *date_opened_str = (const char *)sqlite3_column_text(stmt, 5);
+
+        entity.account.name = my_strdup(name);
+        entity.account.mobile = my_strdup(mobile);
+        entity.account.email_address = my_strdup(email_address);
+
+        // Parse the date_opened string into a Date structure
+        sscanf(date_opened_str, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
+
+        // Add the entity to the list
+        resultList.entities = realloc(resultList.entities, (resultList.size + 1) * sizeof(struct Entity));
+        resultList.entities[resultList.size++] = entity;
+    }
+
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "SQL execution error: %s\n", sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
+    return resultList;
+}
+struct EntityList searchColumn(sqlite3 *db, const char *column, const char *keyword)
+{
+    struct EntityList resultList = {.entities = NULL, .size = 0};
+
+    // Construct the SQL statement dynamically based on the specified column
+    const char *sqlTemplate = "SELECT * FROM accounts WHERE %s LIKE ? COLLATE NOCASE";
+    char *sql = sqlite3_mprintf(sqlTemplate, column);
+    printf("SQL statement: %s\n", sql);
+
+    sqlite3_stmt *stmt;
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
+
+    sqlite3_free(sql); // Free the allocated memory for sql
+
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
+        return resultList; // Return an empty list on error
+    }
+
+    // Add '%' wildcards around the keyword
+    char searchPattern[MAX_LENGTH];
+    snprintf(searchPattern, sizeof(searchPattern), "%%%s%%", keyword);
+
+    // Bind the keyword to the SQL statement
+    rc = sqlite3_bind_text(stmt, 1, searchPattern, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL bind error: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return resultList; // Return an empty list on error
+    }
+
+    printf("Executing SQL statement...\n");
+    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
+    {
+        struct Entity entity;
+        entity.entity_type = ACCOUNT;
+
+        entity.account.id = sqlite3_column_int(stmt, 0);
+        const char *name = (const char *)sqlite3_column_text(stmt, 1);
+        const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
+        const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
+        entity.account.balance = sqlite3_column_int(stmt, 4);
+
+        const char *date_opened_str = (const char *)sqlite3_column_text(stmt, 5);
+
+        entity.account.name = my_strdup(name);
+        entity.account.mobile = my_strdup(mobile);
+        entity.account.email_address = my_strdup(email_address);
+
+        // Parse the date_opened string into a Date structure
+        sscanf(date_opened_str, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
+
+        // Add the entity to the list
+        resultList.entities = realloc(resultList.entities, (resultList.size + 1) * sizeof(struct Entity));
+        resultList.entities[resultList.size++] = entity;
+    }
+
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "SQL execution error: %s\n", sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
+    return resultList;
 }

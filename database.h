@@ -58,5 +58,7 @@ struct EntityList getAll(sqlite3 *,enum EntityType entity_type);
 int delete(sqlite3 *, int account_id);
 int edit(sqlite3 *, struct Account);
 int login(sqlite3*, struct User);
+struct EntityList searchAccounts(sqlite3* db,const char* keyword);
+struct EntityList searchColumn(sqlite3 *db, const char *column, const char *keyword);
 
 #endif
