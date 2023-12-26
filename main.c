@@ -10,8 +10,7 @@ int main(int argc, char *argv[])
 {
     const char *databasePath = "zerbew.db";
 
-    // Open the database
-    sqlite3 *db;
+         sqlite3 *db;
     int rc = sqlite3_open(databasePath, &db);
 
     if (rc)
@@ -20,25 +19,8 @@ int main(int argc, char *argv[])
         sqlite3_close(db);
         return 1;
     }
-    //loginUser(db);
-    Menu(db);
-    // createTable(db);
-    //createAccount(db);
-    // loginUser(db);
-    // Withdraw(db);
-    // edit(db);
-    // getTransactions(db);
-    // struct Account account;
-    // struct Date account_date;
-    // account_date.year = 2023;
-    // account_date.month = 2; // Set month to 2 for February
-    // account.id = 22;
-    // account.name = "adsas";
-    // account.date_opened = account_date;
-    // long account_number = generateAccountNumber(&account);
-    // printf("%ld", account_number);
-    // regularSearch(db);
-    // Close the SQLite database
+    
+    loginUser(db);
     sqlite3_close(db);
 
     return 0;
