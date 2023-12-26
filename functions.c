@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sqlite3.h>
 #include <stddef.h>
 #include <time.h>
@@ -180,6 +181,50 @@ void getAllAccounts(sqlite3 *db)
     sqlite3_close(db);
 }
 
+int isValidName(const char *name)
+{
+    while(*name)
+    {
+        if (!isalpha(*name) && *name != ' ')
+        {
+            return 0;
+        }
+        name++;
+    }
+    return 1;
+}
+
+int isValidEmail(const char *email)
+{
+    while(*email)
+    {
+        if (*email == '@')
+        {
+            return 1; 
+        }
+        email++;
+    }
+    return 0;
+}
+
+int isValidPhoneNumber(const char *mobile)
+{
+    int count = 0;
+    while(*mobile)
+    {
+        if(isdigit(*mobile))
+        {
+            count++;
+        }
+        else if(*mobile != ' ')
+        {
+            return 0;
+        }
+        mobile++;
+    }
+    return count == 11;
+}
+
 void Menu(sqlite3 *db)
 {
     struct EntityList accountList;
@@ -270,7 +315,14 @@ void Menu(sqlite3 *db)
         {
             name[lenn - 1] = '\0';
         }
-        printf("Update E-mail field:");
+
+        if(!isValidName(name))
+        {
+            printf("Invalid name. Name should consist of letters only.\n");
+            Menu(db);
+        }
+
+        printf("Update Phone number field:");
         if (fgets(mobile, sizeof(mobile), stdin) == NULL)
         {
             fprintf(stderr, "Error reading input.\n");
@@ -281,7 +333,14 @@ void Menu(sqlite3 *db)
         {
             mobile[lenm - 1] = '\0';
         }
-        printf("Update Phone number field:");
+
+        if(!isValidPhoneNumber(mobile))
+        {
+            printf("Invalid phone number. Phone number should consist of 11 integers.\n");
+            Menu(db);
+        }
+
+        printf("Update E-mail field:");
         if (fgets(email, sizeof(email), stdin) == NULL)
         {
             fprintf(stderr, "Error reading input.\n");
@@ -293,12 +352,18 @@ void Menu(sqlite3 *db)
             email[lene - 1] = '\0';
         }
         
-        if(!(name[0]=='\n'))
-            accountList.entities[0].account.name;
-        if(!(email[0]=='\n'))
-            accountList.entities[0].account.mobile;
-        if(!(mobile[0]=='\n'))
-            accountList.entities[0].account.email_address;
+        if(!isValidEmail(email))
+        {
+            printf("Invalid email address. Email address should contain '@'.\n");
+            Menu(db);
+        }
+
+        if (name[0] != '\0')
+            strcpy(accountList.entities[0].account.name, name);
+        if (email[0] != '\0')
+            strcpy(accountList.entities[0].account.email_address, email);
+        if (mobile[0] != '\0')
+            strcpy(accountList.entities[0].account.mobile, mobile);
         
         if(edit(db,accountList.entities[0].account))
         {

@@ -46,4 +46,10 @@ void regularSearch(sqlite3 *db);
 
 long generateAccountNumber(struct Account *account);
 
+int isValidName(const char *name);
+
+int isValidEmail(const char *email);
+
+int isValidPhoneNumber(const char *mobile);
+
 #endif  
