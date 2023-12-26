@@ -20,12 +20,12 @@ int main(int argc, char *argv[])
         sqlite3_close(db);
         return 1;
     }
+    Menu(db);
     // createTable(db);
-    createAccount(db);
+    //createAccount(db);
     // loginUser(db);
     // Withdraw(db);
     // getTransactions(db);
-    Menu(db);
     // struct Account account;
     // struct Date account_date;
     // account_date.year = 2023;
