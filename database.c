@@ -8,16 +8,34 @@
 #include <stddef.h>
 #define MAX_LENGTH 100
 
-char *my_strdup(const char *s)
+// char *my_strdup(const char *s)
+// {
+//     size_t len = strlen(s) + 1;
+//     char *dup = malloc(len);
+//     if (dup != NULL)
+//     {
+//         memcpy(dup, s, len);
+//     }
+//     return dup;
+// }
+char *my_strdup(const char *str)
 {
-    size_t len = strlen(s) + 1;
+    if (str == NULL)
+    {
+        return NULL;
+    }
+
+    size_t len = strlen(str) + 1;
     char *dup = malloc(len);
+
     if (dup != NULL)
     {
-        memcpy(dup, s, len);
+        memcpy(dup, str, len);
     }
+
     return dup;
 }
+
 int createTable(sqlite3 *db)
 {
     char *err_msg;
@@ -33,6 +51,7 @@ int createTable(sqlite3 *db)
 CREATE TABLE IF NOT EXISTS transactions (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
     account_id INTEGER,\
+    account_number INTEGER,\
     price FLOAT,\
     type TEXT\
 );\
@@ -81,7 +100,7 @@ int insert(sqlite3 *db, struct Entity entity)
     }
     else if (entity.entity_type == TRANSACTION)
     {
-        const char *sql = "INSERT INTO transactions (account_id,price,type) VALUES (?,?,?);";
+        const char *sql = "INSERT INTO transactions (account_id,account_number,price,type) VALUES (?,?,?,?);";
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
         if (rc != SQLITE_OK)
         {
@@ -90,8 +109,9 @@ int insert(sqlite3 *db, struct Entity entity)
             return 1;
         }
         sqlite3_bind_int(stmt, 1, entity.transaction.account_id);
-        sqlite3_bind_double(stmt, 2, entity.transaction.price);
-        sqlite3_bind_text(stmt, 3, entity.transaction.type, -1, SQLITE_STATIC);
+        sqlite3_bind_int64(stmt, 2, entity.transaction.account_number);
+        sqlite3_bind_double(stmt, 3, entity.transaction.price);
+        sqlite3_bind_text(stmt, 4, entity.transaction.type, -1, SQLITE_STATIC);
     }
     rc = sqlite3_step(stmt);
 
@@ -106,17 +126,16 @@ int insert(sqlite3 *db, struct Entity entity)
     return 0;
 }
 
-struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
+struct EntityList get(sqlite3 *db, long account_number, enum EntityType entity_type)
 {
     struct EntityList entityList = {.entities = NULL, .size = 0};
 
     char *err_msg = 0;
     sqlite3_stmt *stmt;
     int rc;
-
     if (entity_type == TRANSACTION)
     {
-        const char *sql = "SELECT * FROM Transactions WHERE account_id = ?";
+        const char *sql = "SELECT * FROM transactions WHERE account_number = ?";
 
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
         if (rc != SQLITE_OK)
@@ -126,16 +145,18 @@ struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
             return entityList; // Return an empty list on error
         }
 
-        sqlite3_bind_int(stmt, 1, account_id);
-
+        sqlite3_bind_int64(stmt, 1, account_number);
         while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
         {
             struct Entity entity;
             entity.entity_type = TRANSACTION;
 
             entity.transaction.id = sqlite3_column_int(stmt, 0);
-            entity.transaction.account_id = sqlite3_column_int(stmt, 1);
-            entity.transaction.price = sqlite3_column_double(stmt, 2);
+            entity.transaction.account_number = sqlite3_column_int64(stmt, 2);
+            entity.transaction.price = sqlite3_column_double(stmt, 3);
+            const char *type = (const char *)sqlite3_column_text(stmt, 4);
+            // const char *type = (const char *) sqlite3_column_text(stmt, 4);
+            entity.transaction.type = my_strdup(type);
 
             // Add the entity to the list
             entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
@@ -144,7 +165,7 @@ struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
     }
     else if (entity_type == ACCOUNT)
     {
-        const char *sql = "SELECT * FROM accounts WHERE id = ?";
+        const char *sql = "SELECT * FROM accounts WHERE account_number = ?";
 
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
         if (rc != SQLITE_OK)
@@ -153,8 +174,7 @@ struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
             sqlite3_close(db);
             return entityList; // Return an empty list on error
         }
-
-        sqlite3_bind_int(stmt, 1, account_id);
+        sqlite3_bind_int64(stmt, 1, account_number);
 
         while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
         {
@@ -162,18 +182,20 @@ struct EntityList get(sqlite3 *db, int account_id, enum EntityType entity_type)
             entity.entity_type = ACCOUNT;
 
             entity.account.id = sqlite3_column_int(stmt, 0);
-            entity.account.balance = sqlite3_column_int(stmt, 4);
-
+            entity.account.account_number = sqlite3_column_int64(stmt, 1);
+            entity.account.balance = sqlite3_column_int(stmt, 5);
             // Note: Assuming 'name', 'mobile', and 'email_address' are TEXT fields
             // Retrieve other fields for the User entity
-            const char *name = (const char *)sqlite3_column_text(stmt, 1);
-            const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
-            const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
+            const char *name = (const char *)sqlite3_column_text(stmt, 2);
+            const char *mobile = (const char *)sqlite3_column_text(stmt, 3);
+            const char *email_address = (const char *)sqlite3_column_text(stmt, 4);
+            // const char *date_opened = (const char *)sqlite3_column_text(stmt, 6);
 
             // Allocate memory and copy the strings
             entity.account.name = my_strdup(name);
             entity.account.mobile = my_strdup(mobile);
             entity.account.email_address = my_strdup(email_address);
+            // entity.account.date_opened = my_strdup(date_opened);
 
             // Add the entity to the list
             entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
@@ -339,12 +361,12 @@ struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
     return entityList;
 }
 
-int delete(sqlite3 *db, int account_id)
+int delete(sqlite3 *db, long account_number)
 {
     char *err_msg = 0;
 
-    // Delete transactions associated with the account_id
-    const char *delete_transactions_sql = "DELETE FROM transactions WHERE account_id = ?";
+    // Delete transactions associated with the account_number
+    const char *delete_transactions_sql = "DELETE FROM transactions WHERE account_number = ?";
     sqlite3_stmt *stmt_transactions;
     int rc_transactions = sqlite3_prepare_v2(db, delete_transactions_sql, -1, &stmt_transactions, 0);
 
@@ -354,7 +376,7 @@ int delete(sqlite3 *db, int account_id)
         return 1;
     }
 
-    sqlite3_bind_int(stmt_transactions, 1, account_id);
+    sqlite3_bind_int(stmt_transactions, 1, account_number);
     rc_transactions = sqlite3_step(stmt_transactions);
 
     if (rc_transactions != SQLITE_DONE)
@@ -366,8 +388,8 @@ int delete(sqlite3 *db, int account_id)
 
     sqlite3_finalize(stmt_transactions);
 
-    // Delete the account with the given account_id
-    const char *delete_account_sql = "DELETE FROM accounts WHERE id = ?";
+    // Delete the account with the given account_number
+    const char *delete_account_sql = "DELETE FROM accounts WHERE account_number = ?";
     sqlite3_stmt *stmt_account;
     int rc_account = sqlite3_prepare_v2(db, delete_account_sql, -1, &stmt_account, 0);
 
@@ -377,7 +399,7 @@ int delete(sqlite3 *db, int account_id)
         return 1;
     }
 
-    sqlite3_bind_int(stmt_account, 1, account_id);
+    sqlite3_bind_int(stmt_account, 1, account_number);
     rc_account = sqlite3_step(stmt_account);
 
     if (rc_account != SQLITE_DONE)
@@ -399,7 +421,7 @@ int delete(sqlite3 *db, int account_id)
     int rc;
 
     // Update the account record in the "accounts" table
-    const char *update_account_sql = "UPDATE accounts SET account_number = ? WHERE id = ?";
+    const char *update_account_sql = "UPDATE accounts SET account_number = ?, name = ?, mobile = ?,email_address = ?, balance = ?, date_opened =? WHERE id = ?";
     rc = sqlite3_prepare_v2(db, update_account_sql, -1, &stmt, 0);
 
     if (rc != SQLITE_OK)
@@ -409,7 +431,13 @@ int delete(sqlite3 *db, int account_id)
     }
 
     sqlite3_bind_int64(stmt, 1, editedAccount.account_number);
-    sqlite3_bind_int(stmt, 2, editedAccount.id); 
+    sqlite3_bind_text(stmt, 2, editedAccount.name, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, editedAccount.mobile, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, editedAccount.email_address, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 5, editedAccount.balance);
+    char *date_opened_str = sqlite3_mprintf("%02d-%d", editedAccount.date_opened.month, editedAccount.date_opened.year);
+    sqlite3_bind_text(stmt, 6, date_opened_str, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 7, editedAccount.id);
 
     rc = sqlite3_step(stmt);
 
@@ -422,6 +450,7 @@ int delete(sqlite3 *db, int account_id)
 
     sqlite3_finalize(stmt);
 
+    sqlite3_free((void *)date_opened_str);
     return 1; // Success
 }
 */
@@ -682,12 +711,12 @@ struct Account getLastInsertedAccount(sqlite3 *db)
         // Retrieve values from the result set
         account.id = sqlite3_column_int(stmt, 0);
         account.account_number = sqlite3_column_int(stmt, 1);
-        account.balance = sqlite3_column_int(stmt, 2);
+        account.balance = sqlite3_column_int(stmt, 5);
 
         // Retrieve strings, make sure to free them later
-        account.name = my_strdup((const char *)sqlite3_column_text(stmt, 3));
-        account.mobile = my_strdup((const char *)sqlite3_column_text(stmt, 4));
-        account.email_address = my_strdup((const char *)sqlite3_column_text(stmt, 5));
+        account.name = my_strdup((const char *)sqlite3_column_text(stmt, 2));
+        account.mobile = my_strdup((const char *)sqlite3_column_text(stmt, 3));
+        account.email_address = my_strdup((const char *)sqlite3_column_text(stmt, 4));
 
         // Retrieve date_opened
         sscanf((const char *)sqlite3_column_text(stmt, 6), "%d-%d", &account.date_opened.month, &account.date_opened.year);

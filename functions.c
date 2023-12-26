@@ -132,7 +132,6 @@ void createAccount(sqlite3 *db)
     }
 
     printf("Current Date: %d-%02d\n", currentDate.month, currentDate.year);
-
     struct Entity accountEntity;
     accountEntity.entity_type = ACCOUNT;
     accountEntity.account.name = name;
@@ -161,9 +160,10 @@ void getAllTransactions(sqlite3 *db)
     printf("Transaction entities:\n");
     for (size_t i = 0; i < transactionList.size; ++i)
     {
-        printf("Transaction ID: %d, Account ID: %d, Price: %lf\n",
+        printf("Transaction ID: %d, Account ID: %d,Account Number: %ld,Price: %lf\n",
                transactionList.entities[i].transaction.id,
                transactionList.entities[i].transaction.account_id,
+               transactionList.entities[i].transaction.account_number,
                transactionList.entities[i].transaction.price);
     }
 
@@ -300,11 +300,11 @@ void Save(sqlite3 *db,struct Account *accounts,struct EntityList *accountsList,i
 
 void Withdraw(sqlite3 *db)
 {
-    int account_id;
+    long account_number;
     double amount;
 
     printf("Please, enter your account number:");
-    while (scanf("%d", &account_id) != 1)
+    while (scanf("%ld", &account_number) != 1)
     {
         while (getchar() != '\n')
             ;
@@ -312,7 +312,7 @@ void Withdraw(sqlite3 *db)
         printf("Please, enter your account number:");
     }
 
-    struct EntityList accountList = get(db, account_id, ACCOUNT);
+    struct EntityList accountList = get(db, account_number, ACCOUNT);
     if (accountList.size == 0)
     {
         printf("Account number not found, please try again.\n");
@@ -355,11 +355,11 @@ void Withdraw(sqlite3 *db)
 
 void Deposit(sqlite3 *db)
 {
-    int account_id;
+    long account_number;
     double amount;
 
     printf("Please, enter your account number:");
-    while (scanf("%d", &account_id) != 1)
+    while (scanf("%ld", &account_number) != 1)
     {
         while (getchar() != '\n')
             ;
@@ -367,7 +367,7 @@ void Deposit(sqlite3 *db)
         printf("Please, enter your account number:");
     }
 
-    struct EntityList accountList = get(db, account_id, ACCOUNT);
+    struct EntityList accountList = get(db, account_number, ACCOUNT);
     if (accountList.size == 0)
     {
         printf("Account number not found, please try again.\n");
@@ -398,7 +398,7 @@ void Deposit(sqlite3 *db)
 
 void Transfer(sqlite3 *db)
 {
-    int sender_account_id, receiver_account_id;
+    int sender_account_number, receiver_account_number;
     double amount;
 
     struct EntityList senderAccountList;
@@ -406,7 +406,7 @@ void Transfer(sqlite3 *db)
     {
         printf("Please, enter sender account number:");
 
-        while (scanf("%d", &sender_account_id) != 1)
+        while (scanf("%d", &sender_account_number) != 1)
         {
             while (getchar() != '\n')
                 ;
@@ -414,7 +414,7 @@ void Transfer(sqlite3 *db)
             printf("Please, enter sender account number:");
         }
 
-        senderAccountList = get(db, sender_account_id, ACCOUNT);
+        senderAccountList = get(db, sender_account_number, ACCOUNT);
         if (senderAccountList.size == 0)
             printf("Sender's account number not found, please try again.\n");
 
@@ -425,7 +425,7 @@ void Transfer(sqlite3 *db)
     {
         printf("Please, enter receiver account number:");
 
-        while (scanf("%d", &receiver_account_id) != 1)
+        while (scanf("%d", &receiver_account_number) != 1)
         {
             while (getchar() != '\n')
                 ;
@@ -433,14 +433,14 @@ void Transfer(sqlite3 *db)
             printf("Please, enter receiver account number:");
         }
 
-        receiverAccountList = get(db, receiver_account_id, ACCOUNT);
+        receiverAccountList = get(db, receiver_account_number, ACCOUNT);
         if (receiverAccountList.size == 0)
             printf("Receiver's account number not found, please try again.\n");
 
-        if (sender_account_id == receiver_account_id)
+        if (sender_account_number == receiver_account_number)
             printf("Receiver's account number is the same as the sender account number, please try again.\n");
 
-    } while (receiverAccountList.size == 0 || sender_account_id == receiver_account_id);
+    } while (receiverAccountList.size == 0 || sender_account_number == receiver_account_number);
 
     struct Account sender = senderAccountList.entities[0].account;
     struct Account receiver = receiverAccountList.entities[0].account;

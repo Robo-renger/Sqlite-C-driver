@@ -13,6 +13,7 @@ struct Transaction
 {
     int id;
     int account_id;
+    long account_number;
     float price;
     char *type;
 };
@@ -53,9 +54,9 @@ struct Entity
 };
 int createTable(sqlite3 *);
 int insert(sqlite3 *, struct Entity);
-struct EntityList get(sqlite3 *, int account_id, enum EntityType entity_type);
+struct EntityList get(sqlite3 *, long account_number, enum EntityType entity_type);
 struct EntityList getAll(sqlite3 *,enum EntityType entity_type);
-int delete(sqlite3 *, int account_id);
+int delete(sqlite3 *, long account_number);
 int edit(sqlite3 *, struct Account);
 int login(sqlite3*, struct User);
 struct EntityList searchAccounts(sqlite3* db,const char* keyword);

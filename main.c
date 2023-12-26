@@ -22,9 +22,44 @@ int main(int argc, char *argv[])
     }
     loginUser(db);
     // createTable(db);
-    //createAccount(db);
+    // struct EntityList resultList = get(db, 20231200000001, TRANSACTION);
+
+    // for (size_t i = 0; i < resultList.size; ++i)
+    // {
+    //     if (resultList.entities[i].entity_type == TRANSACTION)
+    //     {
+    //         printf("Transaction ID: %d\n", resultList.entities[i].transaction.account_id);
+    //         printf("Transaction account Number: %ld\n", resultList.entities[i].transaction.account_number);
+    //         printf("Transaction Price: %f\n", resultList.entities[i].transaction.price);
+    //         printf("Transaction type: %s\n", resultList.entities[i].transaction.type);
+    //         // Add more fields as needed
+    //     }
+    //     // Process other entity types if needed
+    // }
+
+    // // Free the allocated memory
+    // for (size_t i = 0; i < resultList.size; ++i)
+    // {
+    //     if (resultList.entities[i].entity_type == ACCOUNT)
+    //     {
+    //         free(resultList.entities[i].account.name);
+    //         free(resultList.entities[i].account.mobile);
+    //         free(resultList.entities[i].account.email_address);
+    //     }
+    // }
+    // struct Transaction transaction;
+    // transaction.account_number = 20231200000001;
+    // transaction.account_id = 1;
+    // transaction.price = 90;
+    // struct Entity entity;
+    // entity.entity_type = TRANSACTION;
+    // entity.transaction = transaction;
+    // insert(db,entity);
+    // free(resultList.entities);
+    // createAccount(db);
     // loginUser(db);
     // Withdraw(db);
+    // edit(db);
     // getTransactions(db);
     // struct Account account;
     // struct Date account_date;
