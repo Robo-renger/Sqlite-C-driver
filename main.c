@@ -20,9 +20,9 @@ int main(int argc, char *argv[])
         sqlite3_close(db);
         return 1;
     }
-    loginUser(db);
-    // createTable(db);
-    //createAccount(db);
+    //loginUser(db);
+    //createTable(db);
+    createAccount(db);
     // loginUser(db);
     // Withdraw(db);
     // getTransactions(db);
@@ -33,12 +33,9 @@ int main(int argc, char *argv[])
     // account.id = 22;
     // account.name = "adsas";
     // account.date_opened = account_date;
-
     // long account_number = generateAccountNumber(&account);
     // printf("%ld", account_number);
-
     // regularSearch(db);
-
     // Close the SQLite database
     sqlite3_close(db);
 

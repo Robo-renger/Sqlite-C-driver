@@ -80,7 +80,6 @@ void createAccount(sqlite3 *db)
 
     getCurrentDate(&currentDate);
     
-    getchar();
     
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
@@ -143,7 +142,7 @@ void createAccount(sqlite3 *db)
     insert(db, accountEntity);
     struct Account lastAccount = getLastInsertedAccount(db);
     lastAccount.account_number = generateAccountNumber(&lastAccount);
-    printf("%ld", lastAccount.account_number);
+    printf("%ld\n", lastAccount.account_number);
     
     edit(db, lastAccount);
     /*

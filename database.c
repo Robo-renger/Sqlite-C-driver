@@ -392,7 +392,7 @@ int delete(sqlite3 *db, int account_id)
     return 0; // Success
 }
 
-/*int edit(sqlite3 *db, struct Account editedAccount)
+int edit(sqlite3 *db, struct Account editedAccount)
 {
     char *err_msg = 0;
     sqlite3_stmt *stmt;
@@ -424,9 +424,9 @@ int delete(sqlite3 *db, int account_id)
 
     return 1; // Success
 }
-*/
 
-int edit(sqlite3 *db, struct Account editedAccount)
+
+/*int edit(sqlite3 *db, struct Account editedAccount)
 {
     char *err_msg = 0;
     sqlite3_stmt *stmt;
@@ -461,7 +461,7 @@ int edit(sqlite3 *db, struct Account editedAccount)
 
     return 1; // Success
 }
-
+*/
 int login(sqlite3 *db, struct User user)
 {
     char *err_msg = 0;
