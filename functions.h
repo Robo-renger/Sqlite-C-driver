@@ -14,7 +14,7 @@ int generateUniqueID(const struct Account *account);
 
 void getCurrentDate(struct Date *currentDate);
 
-void Save(sqlite3 *db,struct Account);
+void Save(sqlite3 *db,struct Account *accounts,struct EntityList *accountsList,int numberOfAccounts);
 
 void Menu(sqlite3 *db);
 

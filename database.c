@@ -392,7 +392,7 @@ int delete(sqlite3 *db, int account_id)
     return 0; // Success
 }
 
-int edit(sqlite3 *db, struct Account editedAccount)
+/*int edit(sqlite3 *db, struct Account editedAccount)
 {
     char *err_msg = 0;
     sqlite3_stmt *stmt;
@@ -410,6 +410,43 @@ int edit(sqlite3 *db, struct Account editedAccount)
 
     sqlite3_bind_int64(stmt, 1, editedAccount.account_number);
     sqlite3_bind_int(stmt, 2, editedAccount.id); 
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "SQL execution error (account update): %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt);
+
+    return 1; // Success
+}
+*/
+
+int edit(sqlite3 *db, struct Account editedAccount)
+{
+    char *err_msg = 0;
+    sqlite3_stmt *stmt;
+    int rc;
+
+    // Update the account record in the "accounts" table
+    const char *update_account_sql = "UPDATE accounts SET balance = ?, name = ?, mobile = ?, email_address = ? WHERE id = ?";
+    rc = sqlite3_prepare_v2(db, update_account_sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL prepare error (account update): %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+
+    sqlite3_bind_int(stmt, 1, editedAccount.balance);
+    sqlite3_bind_text(stmt, 2, editedAccount.name, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, editedAccount.mobile, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, editedAccount.email_address, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 5, editedAccount.id);
 
     rc = sqlite3_step(stmt);
 

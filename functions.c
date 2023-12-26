@@ -42,6 +42,7 @@ void getCurrentDate(struct Date *currentDate)
         exit(EXIT_FAILURE);
     }
 }
+
 void freeEntityList(struct EntityList *entityList)
 {
     if (entityList->entities != NULL)
@@ -78,7 +79,9 @@ void createAccount(sqlite3 *db)
     struct Date currentDate;
 
     getCurrentDate(&currentDate);
-
+    
+    getchar();
+    
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
     {
@@ -141,7 +144,13 @@ void createAccount(sqlite3 *db)
     struct Account lastAccount = getLastInsertedAccount(db);
     lastAccount.account_number = generateAccountNumber(&lastAccount);
     printf("%ld", lastAccount.account_number);
+    
     edit(db, lastAccount);
+    /*
+    struct Account accounts[] = {lastAccount};
+    struct EntityList accountList[] = {get(db, lastAccount.id, ACCOUNT)};
+    Save(db, accounts, accountList, 1);
+    */
 }
 
 void getAllTransactions(sqlite3 *db)
@@ -161,6 +170,7 @@ void getAllTransactions(sqlite3 *db)
     // Free allocated memory for transaction entities
     freeEntityList(&transactionList);
 }
+
 void getAllAccounts(sqlite3 *db)
 {
 
@@ -206,8 +216,7 @@ void Menu(sqlite3 *db)
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n')
-            ;
+        while (getchar() != '\n');
         Menu(db);
     }
 
@@ -215,6 +224,12 @@ void Menu(sqlite3 *db)
     {
     case 1:
         createAccount(db);
+        break;
+    case 4:
+        regularSearch(db);
+        break;
+    case 5:
+        advancedSearch(db);
         break;
     case 6:
         Withdraw(db);
@@ -238,10 +253,12 @@ void Menu(sqlite3 *db)
     }
 }
 
-void Save(sqlite3 *db,struct Account waccount)
+void Save(sqlite3 *db,struct Account *accounts,struct EntityList *accountsList,int numberOfAccounts)
 {
     int choice;
-
+    if(numberOfAccounts==0)
+        Menu(db);
+    
     printf("Process is successfully done and awaiting for you to save changes\n");
     printf("1. Confirm changes\n");
     printf("2. Discard changes\n");
@@ -250,32 +267,36 @@ void Save(sqlite3 *db,struct Account waccount)
     {
         printf("Invalid input. Please enter a valid integer.\n");
         while(getchar() != '\n');
-        Save(db,account);
+        Save(db,accounts,accountsList,numberOfAccounts);
     }
 
     switch(choice)
     {
         case 1:
-            if (edit(db, account) == 1)
+            for (int i = 0; i < numberOfAccounts; ++i)
             {
-                printf("Changes saved successfully.\n");
-                Menu(db);
+            if (edit(db, accounts[i]) != 1)
+                {
+                printf("Failed to save changes for account %d.\n", i + 1);
+                freeEntityList(&accountsList[i]);
+                }
             }
-            else
-            {
-                printf("Failed to save changes.\n");
-                Menu(db);
-            }
+            printf("Changes saved successfully.\n");
+            Menu(db);
             break;
         case 2:
+            for (int i = 0; i < numberOfAccounts; ++i)
+                freeEntityList(&accountsList[i]);
+            
             printf("Changes discarded.\n");
             Menu(db);
             break;
         default:
             printf("Invalid choice, please try again.\n");
-            Save(db,account);
+            Save(db,accounts,accountsList,numberOfAccounts);
     }
 }
+
 
 void Withdraw(sqlite3 *db)
 {
@@ -328,7 +349,8 @@ void Withdraw(sqlite3 *db)
         scanf("%lf", &amount);
     }
     account.balance -= amount;
-    Save(db,account);
+
+    Save(db, &account, &accountList, 1);
 }
 
 void Deposit(sqlite3 *db)
@@ -371,7 +393,7 @@ void Deposit(sqlite3 *db)
     }
     account.balance += amount;
     
-    Save(db,account);
+    Save(db, &account, &accountList, 1);
 }
 
 void Transfer(sqlite3 *db)
@@ -446,15 +468,9 @@ void Transfer(sqlite3 *db)
     sender.balance -= amount;
     receiver.balance += amount;
 
-    int s_ed = edit(db, sender);
-    int r_ed = edit(db, receiver);
-    if (s_ed == 1 && r_ed == 1)
-    {
-        printf("Transaction is completed successfully\n");
-        freeEntityList(&senderAccountList);
-        freeEntityList(&receiverAccountList);
-        Menu(db);
-    }
+    struct Account accounts[] = {sender, receiver};
+    struct EntityList accountsList[] = {senderAccountList, receiverAccountList};
+    Save(db, accounts, accountsList, 2);
 }
 
 void Print(struct EntityList *entityList, sqlite3 *db)
@@ -586,6 +602,7 @@ void SortByDate(struct EntityList *entityList, sqlite3 *db)
     }
     Menu(db);
 }
+
 int loginUser(sqlite3 *db)
 {
     char username[MAX_LENGTH];
@@ -620,6 +637,7 @@ int loginUser(sqlite3 *db)
     if (login(db, user))
     {
         printf("Logged in successfuly\n");
+        Menu(db);
     }
     else
     {
@@ -627,6 +645,7 @@ int loginUser(sqlite3 *db)
         loginUser(db);
     }
 }
+
 void advancedSearch(sqlite3 *db)
 {
     char keyword[MAX_LENGTH];
@@ -682,6 +701,7 @@ void advancedSearch(sqlite3 *db)
         free(accountList.entities);
     }
 }
+
 void regularSearch(sqlite3 *db)
 {
     char column[MAX_LENGTH];
