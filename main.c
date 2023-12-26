@@ -30,6 +30,6 @@ int main(int argc, char *argv[]) {
     }
     // Withdraw(db);
     // getTransactions(db);
-    // createTable(db);
-    // Menu(db);
+    createTable(db);
+    Menu(db);
 }

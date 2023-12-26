@@ -114,7 +114,7 @@ void createAccount(sqlite3 *db)
         exit(EXIT_FAILURE);
     }
 
-    printf("Current Date: %d-%02d\n", currentDate.year, currentDate.month);
+    printf("Current Date: %d-%02d\n", currentDate.month, currentDate.year);
 
     struct Entity accountEntity;
     accountEntity.entity_type = ACCOUNT;
@@ -219,12 +219,45 @@ void Menu(sqlite3 *db)
     }
 }
 
-/*
-void Save(sqlite3 *db,struct Account)
+void Save(sqlite3 *db,struct Account waccount)
 {
+    int choice;
 
+    printf("Process is successfully done and awaiting for you to save changes\n");
+    printf("1. Confirm changes\n");
+    printf("2. Discard changes\n");
+    printf("Enter the number corresponding to your choice: ");
+    if(scanf("%d", &choice) != 1)
+    {
+        printf("Invalid input. Please enter a valid integer.\n");
+        while(getchar() != '\n');
+        Save(db,account);
+    }
+
+    switch(choice)
+    {
+        case 1:
+            if (edit(db, account) == 1)
+            {
+                printf("Changes saved successfully.\n");
+                Menu(db);
+            }
+            else
+            {
+                printf("Failed to save changes.\n");
+                Menu(db);
+            }
+            break;
+        case 2:
+            printf("Changes discarded.\n");
+            Menu(db);
+            break;
+        default:
+            printf("Invalid choice, please try again.\n");
+            Save(db,account);
+    }
 }
-*/
+
 void Withdraw(sqlite3 *db)
 {
     int account_id;
@@ -275,14 +308,8 @@ void Withdraw(sqlite3 *db)
         printf("Enter the withdrawal amount: ");
         scanf("%lf", &amount);
     }
-
     account.balance -= amount;
-    int ed = edit(db, account);
-    if (ed == 1)
-    {
-        printf("Transaction is completed successfully\n");
-        Menu(db);
-    }
+    Save(db,account);
 
 }
 
@@ -324,15 +351,9 @@ void Deposit(sqlite3 *db)
         printf("Enter the deposit amount: ");
         scanf("%lf", &amount);
     }
-
     account.balance += amount;
-    int ed = edit(db, account);
-    if (ed == 1)
-    {
-        printf("Transaction is completed successfully\n");
-        freeEntityList(&accountList);
-        Menu(db);
-    }
+    
+    Save(db,account);
 }
 
 void Transfer(sqlite3 *db)
@@ -392,8 +413,7 @@ void Transfer(sqlite3 *db)
     printf("Enter the amount you want to transfer: ");
     while (scanf("%lf", &amount) != 1)
     {
-        while (getchar() != '\n')
-            ;
+        while (getchar() != '\n');
         printf("Invalid input for amount, please enter valid amount.\n");
         printf("Enter the withdrawal amount: ");
     }
