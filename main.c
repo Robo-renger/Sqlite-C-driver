@@ -20,8 +20,8 @@ int main(int argc, char *argv[])
         sqlite3_close(db);
         return 1;
     }
-    loginUser(db);
-    // createTable(db);
+//     loginUser(db);
+    createTable(db);
     // struct EntityList resultList = get(db, 20231200000001, TRANSACTION);
 
     // for (size_t i = 0; i < resultList.size; ++i)
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     // entity.transaction = transaction;
     // insert(db,entity);
     // free(resultList.entities);
-    // createAccount(db);
+    createAccount(db);
     // loginUser(db);
     // Withdraw(db);
     // edit(db);
