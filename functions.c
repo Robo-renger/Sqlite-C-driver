@@ -16,8 +16,6 @@ long generateAccountNumber(struct Account *account)
     int month = account->date_opened.month;
     int id = account->id;
 
-    printf("Debug: year=%d, month=%d, id=%d\n", year, month, id);
-
     long uniqueNumber = ((long)year * 10000000000) + ((long)month * 100000000) + id;
 
     return uniqueNumber;
@@ -76,14 +74,14 @@ void createAccount(sqlite3 *db)
     struct Date currentDate;
 
     getCurrentDate(&currentDate);
-    
+
     getchar();
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
     {
-
-        fprintf(stderr, "Error reading input.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "\nError reading input.\n");
+        printf("Please Input valid Name \n");
+        Menu(db);
     }
 
     size_t len = strlen(name);
@@ -95,8 +93,9 @@ void createAccount(sqlite3 *db)
     printf("Enter mobile: ");
     if (fgets(mobile, sizeof(mobile), stdin) == NULL)
     {
-        fprintf(stderr, "Error reading input.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "\nError reading input.\n");
+        printf("Please Input valid Mobile \n");
+        Menu(db);
     }
     len = strlen(mobile);
     if (len > 0 && mobile[len - 1] == '\n')
@@ -107,8 +106,9 @@ void createAccount(sqlite3 *db)
     printf("Enter email: ");
     if (fgets(email, sizeof(email), stdin) == NULL)
     {
-        fprintf(stderr, "Error reading input.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "\nError reading input.\n");
+        printf("Please Input valid Email \n");
+        Menu(db);
     }
     len = strlen(email);
     if (len > 0 && email[len - 1] == '\n')
@@ -119,8 +119,9 @@ void createAccount(sqlite3 *db)
     printf("Enter balance: ");
     if (scanf("%lf", &balance) != 1)
     {
-        fprintf(stderr, "Invalid input for balance.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "\nInvalid input for balance.\n");
+        printf("Please Input valid balance \n");
+        Menu(db);
     }
 
     printf("Current Date: %d-%02d\n", currentDate.month, currentDate.year);
@@ -134,14 +135,7 @@ void createAccount(sqlite3 *db)
     insert(db, accountEntity);
     struct Account lastAccount = getLastInsertedAccount(db);
     lastAccount.account_number = generateAccountNumber(&lastAccount);
-    printf("%ld\n", lastAccount.account_number);
-    
     edit(db, lastAccount);
-    /*
-    struct Account accounts[] = {lastAccount};
-    struct EntityList accountList[] = {get(db, lastAccount.id, ACCOUNT)};
-    Save(db, accounts, accountList, 1);
-    */
 }
 
 void getAllTransactions(sqlite3 *db)
@@ -185,7 +179,7 @@ void Menu(sqlite3 *db)
     struct EntityList accountList;
     long account_number;
     int choice;
-    char name[MAX_LENGTH],mobile[MAX_LENGTH],email[MAX_LENGTH];
+    char name[MAX_LENGTH], mobile[MAX_LENGTH], email[MAX_LENGTH];
     printf("Choose an option:\n");
     printf("1. Add\n");
     printf("2. Delete\n");
@@ -202,7 +196,8 @@ void Menu(sqlite3 *db)
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+            ;
         Menu(db);
     }
 
@@ -215,7 +210,8 @@ void Menu(sqlite3 *db)
         printf("Please, enter the account number: ");
         while (scanf("%ld", &account_number) != 1)
         {
-            while (getchar() != '\n');
+            while (getchar() != '\n')
+                ;
             printf("Invalid input for account number, please enter a valid number.\n");
             printf("Please, enter your account number:");
         }
@@ -226,14 +222,14 @@ void Menu(sqlite3 *db)
             printf("Account number not found, please try again.\n");
             Menu(db);
         }
-        
-        if(accountList.entities[0].account.balance!=0)
+
+        if (accountList.entities[0].account.balance != 0)
         {
             printf("ACCOUNT CANNOT BE DELETED, YOUR BALANCE IS NOT ZERO\n");
             Menu(db);
         }
-        
-        if(!delete(db,account_number))
+
+        if (!delete (db, account_number))
         {
             printf("Account deleted successfully\n");
             Menu(db);
@@ -245,7 +241,8 @@ void Menu(sqlite3 *db)
         printf("Please, enter the account number: ");
         while (scanf("%ld", &account_number) != 1)
         {
-            while (getchar() != '\n');
+            while (getchar() != '\n')
+                ;
             printf("Invalid input for account number, please enter a valid number.\n");
             printf("Please, enter your account number:");
         }
@@ -256,7 +253,7 @@ void Menu(sqlite3 *db)
             printf("Account number not found, please try again.\n");
             Menu(db);
         }
-        
+
         printf("If you don't want to edit a field just press ENTER\n");
         printf("Update Name field:");
         getchar();
@@ -292,15 +289,15 @@ void Menu(sqlite3 *db)
         {
             email[lene - 1] = '\0';
         }
-        
-        if(!(name[0]=='\n'))
+
+        if (!(name[0] == '\n'))
             accountList.entities[0].account.name;
-        if(!(email[0]=='\n'))
+        if (!(email[0] == '\n'))
             accountList.entities[0].account.mobile;
-        if(!(mobile[0]=='\n'))
+        if (!(mobile[0] == '\n'))
             accountList.entities[0].account.email_address;
-        
-        if(edit(db,accountList.entities[0].account))
+
+        if (edit(db, accountList.entities[0].account))
         {
             printf("Account edited successfully\n");
             Menu(db);
@@ -350,7 +347,8 @@ int Save(sqlite3 *db, struct Account *accounts, struct EntityList *accountsList,
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+            ;
         Save(db, accounts, accountsList, numberOfAccounts);
     }
 
@@ -379,15 +377,15 @@ int Save(sqlite3 *db, struct Account *accounts, struct EntityList *accountsList,
     }
 }
 
-void makeTransaction(sqlite3 *db, struct Account account, char *transaction_type,double amount)
+void makeTransaction(sqlite3 *db, struct Account account, char *transaction_type, double amount)
 {
     struct Entity transaction;
-    
+
     transaction.transaction.account_number = account.account_number;
     transaction.transaction.price = amount;
     transaction.transaction.type = transaction_type;
     transaction.entity_type = TRANSACTION;
-    insert(db,transaction);
+    insert(db, transaction);
 }
 
 void Withdraw(sqlite3 *db)
@@ -441,12 +439,11 @@ void Withdraw(sqlite3 *db)
         scanf("%lf", &amount);
     }
     account.balance -= amount;
-    
-    if(Save(db, &account, &accountList, 1))
-        makeTransaction(db,account,"withdraw",amount);
-    
-    Menu(db);
 
+    if (Save(db, &account, &accountList, 1))
+        makeTransaction(db, account, "withdraw", amount);
+
+    Menu(db);
 }
 
 void Deposit(sqlite3 *db)
@@ -489,9 +486,9 @@ void Deposit(sqlite3 *db)
     }
     account.balance += amount;
 
-    if(Save(db, &account, &accountList, 1))
-        makeTransaction(db,account,"deposit",amount);
-    
+    if (Save(db, &account, &accountList, 1))
+        makeTransaction(db, account, "deposit", amount);
+
     Menu(db);
 }
 
@@ -507,7 +504,8 @@ void Transfer(sqlite3 *db)
 
         while (scanf("%ld", &sender_account_number) != 1)
         {
-            while (getchar() != '\n');
+            while (getchar() != '\n')
+                ;
             printf("Invalid input for account number, please enter a valid number.\n");
             printf("Please, enter sender account number:");
         }
@@ -569,10 +567,10 @@ void Transfer(sqlite3 *db)
 
     struct Account accounts[] = {sender, receiver};
     struct EntityList accountsList[] = {senderAccountList, receiverAccountList};
-    if(Save(db, accounts, accountsList, 2))
+    if (Save(db, accounts, accountsList, 2))
     {
-        makeTransaction(db,sender,"transfer-send",amount);
-        makeTransaction(db,receiver,"transfer-receive",amount);
+        makeTransaction(db, sender, "transfer-send", amount);
+        makeTransaction(db, receiver, "transfer-receive", amount);
     }
     Menu(db);
 }
@@ -810,18 +808,29 @@ void regularSearch(sqlite3 *db)
 {
     char column[MAX_LENGTH];
     char keyword[MAX_LENGTH];
-    printf("Please Enter the column's name: ");
     getchar();
+    do{
+        printf("Please Enter a valid column (account_number, name, mobile, email_address, balance, date_opened):");
+
     if (fgets(column, sizeof(column), stdin) == NULL)
     {
         fprintf(stderr, "Error reading input.\n");
         exit(EXIT_FAILURE);
     }
+
     size_t columnLen = strlen(column);
     if (columnLen > 0 && column[columnLen - 1] == '\n')
     {
         column[columnLen - 1] = '\0';
     }
+    }
+    while(strcmp(column, "account_number") != 0 &&
+        strcmp(column, "name") != 0 &&
+        strcmp(column, "mobile") != 0 &&
+        strcmp(column, "email_address") != 0 &&
+        strcmp(column, "balance") != 0 &&
+        strcmp(column, "date_opened") != 0);
+
     printf("Please Enter a keyword: ");
     if (fgets(keyword, sizeof(keyword), stdin) == NULL)
     {
