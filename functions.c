@@ -238,7 +238,7 @@ void Menu(sqlite3 *db)
     }
 }
 
-void Save(sqlite3 *db,struct Account waccount)
+void Save(sqlite3 *db,struct Account account)
 {
     int choice;
 
