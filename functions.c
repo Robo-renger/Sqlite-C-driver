@@ -77,7 +77,7 @@ void createAccount(sqlite3 *db)
 
     getCurrentDate(&currentDate);
     
-    
+    getchar();
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
     {
@@ -134,7 +134,7 @@ void createAccount(sqlite3 *db)
     insert(db, accountEntity);
     struct Account lastAccount = getLastInsertedAccount(db);
     lastAccount.account_number = generateAccountNumber(&lastAccount);
-    printf("%ld", lastAccount.account_number);
+    printf("%ld\n", lastAccount.account_number);
     
     edit(db, lastAccount);
     /*
@@ -151,9 +151,8 @@ void getAllTransactions(sqlite3 *db)
     printf("Transaction entities:\n");
     for (size_t i = 0; i < transactionList.size; ++i)
     {
-        printf("Transaction ID: %d, Account ID: %d,Account Number: %ld,Price: %lf\n",
+        printf("Transaction ID: %d, Account Number: %ld,Price: %lf\n",
                transactionList.entities[i].transaction.id,
-               transactionList.entities[i].transaction.account_id,
                transactionList.entities[i].transaction.account_number,
                transactionList.entities[i].transaction.price);
     }
@@ -227,6 +226,8 @@ void Menu(sqlite3 *db)
     case 8:
         Transfer(db);
         break;
+    case 9:
+        getAllTransactions(db);
     case 10:
         accountList = getAll(db, ACCOUNT);
         Print(&accountList, db);
@@ -253,8 +254,7 @@ void Save(sqlite3 *db, struct Account *accounts, struct EntityList *accountsList
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n')
-            ;
+        while (getchar() != '\n');
         Save(db, accounts, accountsList, numberOfAccounts);
     }
 
@@ -266,6 +266,7 @@ void Save(sqlite3 *db, struct Account *accounts, struct EntityList *accountsList
             if (edit(db, accounts[i]) != 1)
             {
                 printf("Failed to save changes for account %d.\n", i + 1);
+                //insert(db,)
                 freeEntityList(&accountsList[i]);
             }
         }
@@ -283,6 +284,17 @@ void Save(sqlite3 *db, struct Account *accounts, struct EntityList *accountsList
         printf("Invalid choice, please try again.\n");
         Save(db, accounts, accountsList, numberOfAccounts);
     }
+}
+
+void makeTransaction(sqlite3 *db, struct Account account, char *transaction_type,double amount)
+{
+    struct Entity transaction;
+    
+    transaction.transaction.account_number = account.account_number;
+    transaction.transaction.price = amount;
+    transaction.transaction.type = transaction_type;
+    transaction.entity_type = TRANSACTION;
+    insert(db,transaction);
 }
 
 void Withdraw(sqlite3 *db)
@@ -336,7 +348,8 @@ void Withdraw(sqlite3 *db)
         scanf("%lf", &amount);
     }
     account.balance -= amount;
-
+    
+    makeTransaction(db,account,"Withdraw",amount);
     Save(db, &account, &accountList, 1);
 }
 
@@ -385,7 +398,7 @@ void Deposit(sqlite3 *db)
 
 void Transfer(sqlite3 *db)
 {
-    int sender_account_number, receiver_account_number;
+    long sender_account_number, receiver_account_number;
     double amount;
 
     struct EntityList senderAccountList;
@@ -393,10 +406,9 @@ void Transfer(sqlite3 *db)
     {
         printf("Please, enter sender account number:");
 
-        while (scanf("%d", &sender_account_number) != 1)
+        while (scanf("%ld", &sender_account_number) != 1)
         {
-            while (getchar() != '\n')
-                ;
+            while (getchar() != '\n');
             printf("Invalid input for account number, please enter a valid number.\n");
             printf("Please, enter sender account number:");
         }
@@ -412,7 +424,7 @@ void Transfer(sqlite3 *db)
     {
         printf("Please, enter receiver account number:");
 
-        while (scanf("%d", &receiver_account_number) != 1)
+        while (scanf("%ld", &receiver_account_number) != 1)
         {
             while (getchar() != '\n')
                 ;
@@ -512,7 +524,8 @@ void SortByName(struct EntityList *entityList, sqlite3 *db)
     printf("Sorted Account List (Sorted by Name):\n");
     for (size_t i = 0; i < entityList->size; i++)
     {
-        printf("Account Number: %d\n", entityList->entities[i].account.id);
+        printf("Account ID: %d\n", entityList->entities[i].account.id);
+        printf("Account Number: %ld\n", entityList->entities[i].account.account_number);
         printf("Name: %s\n", entityList->entities[i].account.name);
         printf("Email: %s\n", entityList->entities[i].account.email_address);
         printf("Balance: %d\n", entityList->entities[i].account.balance);

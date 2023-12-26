@@ -24,6 +24,8 @@ void Deposit(sqlite3 *db);
 
 void Transfer(sqlite3 *db);
 
+void makeTransaction(sqlite3 *db, struct Account account, char *transaction_type,double amount);
+
 void getAllTransactions(sqlite3 *db);
 
 void getTransactions(sqlite3 *db);

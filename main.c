@@ -20,8 +20,9 @@ int main(int argc, char *argv[])
         sqlite3_close(db);
         return 1;
     }
-    loginUser(db);
-    // createTable(db);
+    //loginUser(db);
+    Menu(db);
+    //createTable(db);
     //createAccount(db);
     // loginUser(db);
     // Withdraw(db);

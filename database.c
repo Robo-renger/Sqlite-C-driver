@@ -50,7 +50,6 @@ int createTable(sqlite3 *db)
 );\
 CREATE TABLE IF NOT EXISTS transactions (\
     id INTEGER PRIMARY KEY AUTOINCREMENT,\
-    account_id INTEGER,\
     account_number INTEGER,\
     price FLOAT,\
     type TEXT\
@@ -108,10 +107,9 @@ int insert(sqlite3 *db, struct Entity entity)
             sqlite3_close(db);
             return 1;
         }
-        sqlite3_bind_int(stmt, 1, entity.transaction.account_id);
-        sqlite3_bind_int64(stmt, 2, entity.transaction.account_number);
-        sqlite3_bind_double(stmt, 3, entity.transaction.price);
-        sqlite3_bind_text(stmt, 4, entity.transaction.type, -1, SQLITE_STATIC);
+        sqlite3_bind_int64(stmt, 1, entity.transaction.account_number);
+        sqlite3_bind_double(stmt, 2, entity.transaction.price);
+        sqlite3_bind_text(stmt, 3, entity.transaction.type, -1, SQLITE_STATIC);
     }
     rc = sqlite3_step(stmt);
 
@@ -189,17 +187,17 @@ struct EntityList get(sqlite3 *db, long account_number, enum EntityType entity_t
             const char *name = (const char *)sqlite3_column_text(stmt, 2);
             const char *mobile = (const char *)sqlite3_column_text(stmt, 3);
             const char *email_address = (const char *)sqlite3_column_text(stmt, 4);
-            // const char *date_opened = (const char *)sqlite3_column_text(stmt, 6);
-
+            const char *dateOpened = (const char *)sqlite3_column_text(stmt, 6);
+            sscanf(dateOpened, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
             // Allocate memory and copy the strings
             entity.account.name = my_strdup(name);
             entity.account.mobile = my_strdup(mobile);
             entity.account.email_address = my_strdup(email_address);
-            // entity.account.date_opened = my_strdup(date_opened);
 
             // Add the entity to the list
             entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
             entityList.entities[entityList.size++] = entity;
+            // free(date_string);
         }
     }
     else
@@ -225,13 +223,13 @@ struct EntityList get(sqlite3 *db, long account_number, enum EntityType entity_t
             }
         }
         free(entityList.entities);
-
         return entityList; // Return an empty list on error
     }
 
     sqlite3_finalize(stmt);
     return entityList;
 }
+
 struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
 {
     struct EntityList entityList = {.entities = NULL, .size = 0};
@@ -271,9 +269,12 @@ struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
         // Adjust the data retrieval based on the entity type
         if (entity_type == TRANSACTION)
         {
-            entity.transaction.id = sqlite3_column_int(stmt, 0);
-            entity.transaction.account_id = sqlite3_column_int(stmt, 1);
+            const char *type = (const char *)sqlite3_column_text(stmt, 3);
 
+            entity.transaction.id = sqlite3_column_int(stmt, 0);
+            entity.transaction.account_number = sqlite3_column_int(stmt, 1);
+            entity.transaction.type = (type != NULL) ? my_strdup(type) : NULL;
+            
             // Check for NULL value in 'price' column
             if (sqlite3_column_type(stmt, 2) == SQLITE_NULL)
             {
@@ -289,7 +290,7 @@ struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
             entity.account.id = sqlite3_column_int(stmt, 0);
 
             // Check for NULL values in 'balance' column
-            if (sqlite3_column_type(stmt, 4) == SQLITE_NULL || sqlite3_column_type(stmt, 5) == SQLITE_NULL)
+            if (sqlite3_column_type(stmt, 5) == SQLITE_NULL || sqlite3_column_type(stmt, 6) == SQLITE_NULL)
             {
                 entity.account.balance = 0; // Or set it to a default value
                 entity.account.date_opened.month = 1;
@@ -297,16 +298,17 @@ struct EntityList getAll(sqlite3 *db, enum EntityType entity_type)
             }
             else
             {
-                entity.account.balance = sqlite3_column_int(stmt, 4);
-                const char *dateOpened = (const char *)sqlite3_column_text(stmt, 5);
+                entity.account.balance = sqlite3_column_int(stmt, 5);
+                const char *dateOpened = (const char *)sqlite3_column_text(stmt, 6);
                 sscanf(dateOpened, "%d-%d", &entity.account.date_opened.month, &entity.account.date_opened.year);
             }
 
             // Note: Assuming 'name', 'mobile', and 'email_address' are TEXT fields
             // Retrieve other fields for the User entity
-            const char *name = (const char *)sqlite3_column_text(stmt, 1);
-            const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
-            const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
+            entity.account.account_number = sqlite3_column_int64(stmt, 1);
+            const char *name = (const char *)sqlite3_column_text(stmt, 2);
+            const char *mobile = (const char *)sqlite3_column_text(stmt, 3);
+            const char *email_address = (const char *)sqlite3_column_text(stmt, 4);
 
             // Check for NULL values and allocate memory only if not NULL
             entity.account.name = (name != NULL) ? my_strdup(name) : NULL;
@@ -414,6 +416,7 @@ int delete(sqlite3 *db, long account_number)
     return 0; // Success
 }
 
+/*
 int edit(sqlite3 *db, struct Account editedAccount)
 {
     char *err_msg = 0;
@@ -445,8 +448,47 @@ int edit(sqlite3 *db, struct Account editedAccount)
     sqlite3_finalize(stmt);
 
     return 1; // Success
-}
+}*/
 
+int edit(sqlite3 *db, struct Account editedAccount)
+{
+    char *err_msg = 0;
+    sqlite3_stmt *stmt;
+    int rc;
+
+    // Update the account record in the "accounts" table
+    const char *update_account_sql = "UPDATE accounts SET account_number = ?, name = ?, mobile = ?,email_address = ?, balance = ?, date_opened =? WHERE id = ?";
+    rc = sqlite3_prepare_v2(db, update_account_sql, -1, &stmt, 0);
+
+    if (rc != SQLITE_OK)
+    {
+        fprintf(stderr, "SQL prepare error (account update): %s\n", sqlite3_errmsg(db));
+        return 0;
+    }
+
+    sqlite3_bind_int64(stmt, 1, editedAccount.account_number);
+    sqlite3_bind_text(stmt, 2, editedAccount.name, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, editedAccount.mobile, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, editedAccount.email_address, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 5, editedAccount.balance);
+    char *date_opened_str = sqlite3_mprintf("%02d-%d", editedAccount.date_opened.month, editedAccount.date_opened.year);
+    sqlite3_bind_text(stmt, 6, date_opened_str, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 7, editedAccount.id);
+
+    rc = sqlite3_step(stmt);
+
+    if (rc != SQLITE_DONE)
+    {
+        fprintf(stderr, "SQL execution error (account update): %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+
+    sqlite3_finalize(stmt);
+
+    sqlite3_free((void *)date_opened_str);
+    return 1; // Success
+}
 
 /*int edit(sqlite3 *db, struct Account editedAccount)
 {
@@ -488,6 +530,7 @@ int edit(sqlite3 *db, struct Account editedAccount)
     return 1; // Success
 }
 */
+
 int login(sqlite3 *db, struct User user)
 {
     char *err_msg = 0;

@@ -12,7 +12,6 @@ struct Date
 struct Transaction
 {
     int id;
-    int account_id;
     long account_number;
     float price;
     char *type;
