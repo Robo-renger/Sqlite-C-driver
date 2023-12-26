@@ -9,19 +9,35 @@
 
 #define MAX_LENGTH 100
 
-int generateUniqueID(const struct Account *account)
+long generateAccountNumber(struct Account *account)
 {
-    return account->id * 10000 + account->date_opened.year * 100 + account->date_opened.month;
+    // Extract year, month, and id
+    int year = account->date_opened.year;
+    int month = account->date_opened.month;
+    int id = account->id;
+
+    printf("Debug: year=%d, month=%d, id=%d\n", year, month, id); // Debugging line
+
+    // Check if the year and month match the specified criteria (2023 and 02)
+
+    // Combine the year, month, and id to create a unique number
+    long uniqueNumber = ((long)year * 10000000000) + ((long)month * 100000000) + id;
+
+    return uniqueNumber;
 }
 
-void getCurrentDate(struct Date *currentDate) {
+void getCurrentDate(struct Date *currentDate)
+{
     time_t t = time(NULL);
     struct tm *localTime = localtime(&t);
 
-    if (localTime != NULL) {
-        currentDate->month = localTime->tm_mon + 1; // tm_mon is 0-based
+    if (localTime != NULL)
+    {
+        currentDate->month = localTime->tm_mon + 1;    // tm_mon is 0-based
         currentDate->year = localTime->tm_year + 1900; // tm_year is years since 1900
-    } else {
+    }
+    else
+    {
         fprintf(stderr, "Error getting current date.\n");
         exit(EXIT_FAILURE);
     }
@@ -63,7 +79,6 @@ void createAccount(sqlite3 *db)
 
     getCurrentDate(&currentDate);
 
-    getchar();
     printf("Enter name of the account: ");
     if (fgets(name, sizeof(name), stdin) == NULL)
     {
@@ -105,7 +120,6 @@ void createAccount(sqlite3 *db)
         email[len - 1] = '\0';
     }
 
-
     // Get the balance
     printf("Enter balance: ");
     if (scanf("%lf", &balance) != 1)
@@ -124,6 +138,10 @@ void createAccount(sqlite3 *db)
     accountEntity.account.balance = balance;
     accountEntity.account.date_opened = currentDate;
     insert(db, accountEntity);
+    struct Account lastAccount = getLastInsertedAccount(db);
+    lastAccount.account_number = generateAccountNumber(&lastAccount);
+    printf("%ld", lastAccount.account_number);
+    edit(db, lastAccount);
 }
 
 void getAllTransactions(sqlite3 *db)
@@ -169,7 +187,7 @@ void getAllAccounts(sqlite3 *db)
 
 void Menu(sqlite3 *db)
 {
-    struct EntityList accountList; 
+    struct EntityList accountList;
 
     int choice;
     printf("Choose an option:\n");
@@ -188,34 +206,35 @@ void Menu(sqlite3 *db)
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+            ;
         Menu(db);
     }
 
     switch (choice)
     {
-        case 1:
-            createAccount(db);
-            break;
-        case 6:
-            Withdraw(db);
-            break;
-        case 7:
-            Deposit(db);
-            break;
-        case 8:
-            Transfer(db);
-            break;
-        case 10:
-            accountList = getAll(db, ACCOUNT);
-            Print(&accountList,db);
-            freeEntityList(&accountList);
-            break;
-        case 11:
-            exit(1);
-        default:
-            printf("Invalid choice, please try again.\n");
-            Menu(db);
+    case 1:
+        createAccount(db);
+        break;
+    case 6:
+        Withdraw(db);
+        break;
+    case 7:
+        Deposit(db);
+        break;
+    case 8:
+        Transfer(db);
+        break;
+    case 10:
+        accountList = getAll(db, ACCOUNT);
+        Print(&accountList, db);
+        freeEntityList(&accountList);
+        break;
+    case 11:
+        exit(1);
+    default:
+        printf("Invalid choice, please try again.\n");
+        Menu(db);
     }
 }
 
@@ -310,7 +329,6 @@ void Withdraw(sqlite3 *db)
     }
     account.balance -= amount;
     Save(db,account);
-
 }
 
 void Deposit(sqlite3 *db)
@@ -439,7 +457,7 @@ void Transfer(sqlite3 *db)
     }
 }
 
-void Print(struct EntityList *entityList,sqlite3 *db)
+void Print(struct EntityList *entityList, sqlite3 *db)
 {
     int choice;
     printf("Choose a sorting option:\n");
@@ -450,38 +468,38 @@ void Print(struct EntityList *entityList,sqlite3 *db)
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n');
+        while (getchar() != '\n')
+            ;
         Print(entityList, db);
     }
 
-    switch(choice)
+    switch (choice)
     {
-        case 1:
-            SortByName(entityList,db);
-            break;
-        case 2:
-            SortByBalance(entityList,db);
-            break;
-        case 3:
-            SortByDate(entityList,db);
-            break;
-        default:
-            printf("Invalid choice, please try again.\n");
-            Print(entityList,db);
+    case 1:
+        SortByName(entityList, db);
+        break;
+    case 2:
+        SortByBalance(entityList, db);
+        break;
+    case 3:
+        SortByDate(entityList, db);
+        break;
+    default:
+        printf("Invalid choice, please try again.\n");
+        Print(entityList, db);
     }
-
 }
 
-void SortByName(struct EntityList *entityList,sqlite3 *db)
+void SortByName(struct EntityList *entityList, sqlite3 *db)
 {
-    for(int i=0; i < entityList->size -1;i++)
+    for (int i = 0; i < entityList->size - 1; i++)
     {
-        for(int j=0; j < entityList->size - i - 1;j++)
+        for (int j = 0; j < entityList->size - i - 1; j++)
         {
-            if(strcmp(entityList->entities[j].account.name,entityList->entities[j+1].account.name)>0)
+            if (strcmp(entityList->entities[j].account.name, entityList->entities[j + 1].account.name) > 0)
             {
-                struct Entity temp = entityList->entities[j+1];
-                entityList->entities[j+1] = entityList->entities[j];
+                struct Entity temp = entityList->entities[j + 1];
+                entityList->entities[j + 1] = entityList->entities[j];
                 entityList->entities[j] = temp;
             }
         }
@@ -496,13 +514,13 @@ void SortByName(struct EntityList *entityList,sqlite3 *db)
         printf("Balance: %d\n", entityList->entities[i].account.balance);
         printf("Mobile: %s\n", entityList->entities[i].account.mobile);
         const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month-1], entityList->entities[i].account.date_opened.year);        printf("\n");
+        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month - 1], entityList->entities[i].account.date_opened.year);
+        printf("\n");
     }
     Menu(db);
-} 
+}
 
-
-void SortByBalance(struct EntityList *entityList,sqlite3 *db)
+void SortByBalance(struct EntityList *entityList, sqlite3 *db)
 {
     for (int i = 0; i < entityList->size - 1; i++)
     {
@@ -526,24 +544,22 @@ void SortByBalance(struct EntityList *entityList,sqlite3 *db)
         printf("Balance: %d\n", entityList->entities[i].account.balance);
         printf("Mobile: %s\n", entityList->entities[i].account.mobile);
         const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month-1], entityList->entities[i].account.date_opened.year);
+        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month - 1], entityList->entities[i].account.date_opened.year);
         printf("\n");
     }
     Menu(db);
 }
 
-void SortByDate(struct EntityList *entityList,sqlite3 *db)
+void SortByDate(struct EntityList *entityList, sqlite3 *db)
 {
     for (int i = 0; i < entityList->size - 1; i++)
     {
         for (int j = 0; j < entityList->size - i - 1; j++)
         {
-            int date1 = entityList->entities[j].account.date_opened.year*10
-                        +    
+            int date1 = entityList->entities[j].account.date_opened.year * 10 +
                         entityList->entities[j].account.date_opened.month;
 
-            int date2 = entityList->entities[j + 1].account.date_opened.year*10 
-                        +
+            int date2 = entityList->entities[j + 1].account.date_opened.year * 10 +
                         entityList->entities[j + 1].account.date_opened.month;
 
             if (date1 > date2)
@@ -565,8 +581,171 @@ void SortByDate(struct EntityList *entityList,sqlite3 *db)
         printf("Mobile: %s\n", entityList->entities[i].account.mobile);
 
         const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month-1], entityList->entities[i].account.date_opened.year);
+        printf("Date Opened: %s %d\n", months[entityList->entities[i].account.date_opened.month - 1], entityList->entities[i].account.date_opened.year);
         printf("\n");
     }
-    Menu(db);    
+    Menu(db);
+}
+int loginUser(sqlite3 *db)
+{
+    char username[MAX_LENGTH];
+    char password[MAX_LENGTH];
+
+    struct User user;
+
+    printf("Please Enter your username: ");
+    if (fgets(username, sizeof(username), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    size_t len = strlen(username);
+    if (len > 0 && username[len - 1] == '\n')
+    {
+        username[len - 1] = '\0';
+    }
+    printf("Please Enter your password: ");
+    if (fgets(password, sizeof(password), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    len = strlen(password);
+    if (len > 0 && password[len - 1] == '\n')
+    {
+        password[len - 1] = '\0';
+    }
+    user.username = username;
+    user.password = password;
+    if (login(db, user))
+    {
+        printf("Logged in successfuly\n");
+    }
+    else
+    {
+        printf("Invalid uername or password\n");
+        loginUser(db);
+    }
+}
+void advancedSearch(sqlite3 *db)
+{
+    char keyword[MAX_LENGTH];
+
+    printf("Please Enter a keyword: ");
+    if (fgets(keyword, sizeof(keyword), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    size_t len = strlen(keyword);
+    if (len > 0 && keyword[len - 1] == '\n')
+    {
+        keyword[len - 1] = '\0';
+    }
+    struct EntityList accountList = searchAccounts(db, keyword);
+
+    // Check if the list is empty
+    if (accountList.size == 0)
+    {
+        printf("No matching accounts found.\n");
+    }
+    else
+    {
+        // Loop through the list and print every matching account
+        for (size_t i = 0; i < accountList.size; ++i)
+        {
+            struct Entity entity = accountList.entities[i];
+
+            if (entity.entity_type == ACCOUNT)
+            {
+                printf("Account ID: %d\n", entity.account.id);
+                printf("Account Number: %ld\n", entity.account.account_number);
+                printf("Name: %s\n", entity.account.name);
+                printf("Mobile: %s\n", entity.account.mobile);
+                printf("Email Address: %s\n", entity.account.email_address);
+                printf("Balance: %d\n", entity.account.balance);
+                printf("Date Opened: %d-%d\n", entity.account.date_opened.month, entity.account.date_opened.year);
+                printf("\n");
+            }
+        }
+
+        // Free the allocated memory
+        for (size_t i = 0; i < accountList.size; ++i)
+        {
+            if (accountList.entities[i].entity_type == ACCOUNT)
+            {
+                free(accountList.entities[i].account.name);
+                free(accountList.entities[i].account.mobile);
+                free(accountList.entities[i].account.email_address);
+            }
+        }
+        free(accountList.entities);
+    }
+}
+void regularSearch(sqlite3 *db)
+{
+    char column[MAX_LENGTH];
+    char keyword[MAX_LENGTH];
+    printf("Please Enter the column's name: ");
+    if (fgets(column, sizeof(column), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    size_t columnLen = strlen(column);
+    if (columnLen > 0 && column[columnLen - 1] == '\n')
+    {
+        column[columnLen - 1] = '\0';
+    }
+    printf("Please Enter a keyword: ");
+    if (fgets(keyword, sizeof(keyword), stdin) == NULL)
+    {
+        fprintf(stderr, "Error reading input.\n");
+        exit(EXIT_FAILURE);
+    }
+    size_t keywordLen = strlen(keyword);
+    if (keywordLen > 0 && keyword[keywordLen - 1] == '\n')
+    {
+        keyword[keywordLen - 1] = '\0';
+    }
+
+    struct EntityList accountList = searchColumn(db, column, keyword);
+
+    // Check if the list is empty
+    if (accountList.size == 0)
+    {
+        printf("No matching accounts found.\n");
+    }
+    else
+    {
+        // Loop through the list and print every matching account
+        for (size_t i = 0; i < accountList.size; ++i)
+        {
+            struct Entity entity = accountList.entities[i];
+
+            if (entity.entity_type == ACCOUNT)
+            {
+                printf("Account ID: %d\n", entity.account.id);
+                printf("Account Number: %ld\n", entity.account.account_number);
+                printf("Name: %s\n", entity.account.name);
+                printf("Mobile: %s\n", entity.account.mobile);
+                printf("Email Address: %s\n", entity.account.email_address);
+                printf("Balance: %d\n", entity.account.balance);
+                printf("Date Opened: %d-%d\n", entity.account.date_opened.month, entity.account.date_opened.year);
+                printf("\n");
+            }
+        }
+
+        // Free the allocated memory
+        for (size_t i = 0; i < accountList.size; ++i)
+        {
+            if (accountList.entities[i].entity_type == ACCOUNT)
+            {
+                free(accountList.entities[i].account.name);
+                free(accountList.entities[i].account.mobile);
+                free(accountList.entities[i].account.email_address);
+            }
+        }
+        free(accountList.entities);
+    }
 }
