@@ -25,7 +25,6 @@ int main(int argc, char *argv[])
     // loginUser(db);
     // Withdraw(db);
     // getTransactions(db);
-    createTable(db);
     Menu(db);
     // struct Account account;
     // struct Date account_date;
