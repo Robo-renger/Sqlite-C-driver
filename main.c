@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     }
     //loginUser(db);
     Menu(db);
-    //createTable(db);
+    // createTable(db);
     //createAccount(db);
     // loginUser(db);
     // Withdraw(db);

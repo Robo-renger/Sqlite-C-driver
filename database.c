@@ -99,7 +99,7 @@ int insert(sqlite3 *db, struct Entity entity)
     }
     else if (entity.entity_type == TRANSACTION)
     {
-        const char *sql = "INSERT INTO transactions (account_id,account_number,price,type) VALUES (?,?,?,?);";
+        const char *sql = "INSERT INTO transactions (account_number,price,type) VALUES (?,?,?);";
         rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
         if (rc != SQLITE_OK)
         {
