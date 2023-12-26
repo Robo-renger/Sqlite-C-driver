@@ -259,11 +259,39 @@ void Menu(sqlite3 *db)
         
         printf("If you don't want to edit a field just press ENTER\n");
         printf("Update Name field:");
-        gets(name);
+        getchar();
+        if (fgets(name, sizeof(name), stdin) == NULL)
+        {
+            fprintf(stderr, "Error reading input.\n");
+            exit(EXIT_FAILURE);
+        }
+        size_t lenn = strlen(name);
+        if (lenn > 0 && name[lenn - 1] == '\n')
+        {
+            name[lenn - 1] = '\0';
+        }
         printf("Update E-mail field:");
-        scanf("%s",email);
+        if (fgets(mobile, sizeof(mobile), stdin) == NULL)
+        {
+            fprintf(stderr, "Error reading input.\n");
+            exit(EXIT_FAILURE);
+        }
+        size_t lenm = strlen(mobile);
+        if (lenm > 0 && mobile[lenm - 1] == '\n')
+        {
+            mobile[lenm - 1] = '\0';
+        }
         printf("Update Phone number field:");
-        scanf("%s",mobile);
+        if (fgets(email, sizeof(email), stdin) == NULL)
+        {
+            fprintf(stderr, "Error reading input.\n");
+            exit(EXIT_FAILURE);
+        }
+        size_t lene = strlen(email);
+        if (lene > 0 && email[lene - 1] == '\n')
+        {
+            email[lene - 1] = '\0';
+        }
         
         if(!(name[0]=='\n'))
             accountList.entities[0].account.name;
