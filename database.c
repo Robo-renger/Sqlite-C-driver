@@ -667,7 +667,6 @@ struct EntityList searchColumn(sqlite3 *db, const char *column, const char *keyw
     // Construct the SQL statement dynamically based on the specified column
     const char *sqlTemplate = "SELECT * FROM accounts WHERE %s LIKE ? COLLATE NOCASE";
     char *sql = sqlite3_mprintf(sqlTemplate, column);
-    printf("SQL statement: %s\n", sql);
 
     sqlite3_stmt *stmt;
     int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, 0);
