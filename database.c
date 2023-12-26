@@ -378,7 +378,7 @@ int delete(sqlite3 *db, long account_number)
         return 1;
     }
 
-    sqlite3_bind_int(stmt_transactions, 1, account_number);
+    sqlite3_bind_int64(stmt_transactions, 1, account_number);
     rc_transactions = sqlite3_step(stmt_transactions);
 
     if (rc_transactions != SQLITE_DONE)
@@ -401,7 +401,7 @@ int delete(sqlite3 *db, long account_number)
         return 1;
     }
 
-    sqlite3_bind_int(stmt_account, 1, account_number);
+    sqlite3_bind_int64(stmt_account, 1, account_number);
     rc_account = sqlite3_step(stmt_account);
 
     if (rc_account != SQLITE_DONE)
@@ -632,12 +632,13 @@ struct EntityList searchAccounts(sqlite3 *db, const char *keyword)
         entity.entity_type = ACCOUNT;
 
         entity.account.id = sqlite3_column_int(stmt, 0);
-        const char *name = (const char *)sqlite3_column_text(stmt, 1);
-        const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
-        const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
-        entity.account.balance = sqlite3_column_int(stmt, 4);
+        entity.account.account_number = sqlite3_column_int64(stmt, 1);
+        const char *name = (const char *)sqlite3_column_text(stmt, 2);
+        const char *mobile = (const char *)sqlite3_column_text(stmt, 3);
+        const char *email_address = (const char *)sqlite3_column_text(stmt, 4);
+        entity.account.balance = sqlite3_column_int(stmt, 5);
 
-        const char *date_opened_str = (const char *)sqlite3_column_text(stmt, 5);
+        const char *date_opened_str = (const char *)sqlite3_column_text(stmt, 6);
 
         entity.account.name = my_strdup(name);
         entity.account.mobile = my_strdup(mobile);
@@ -692,19 +693,19 @@ struct EntityList searchColumn(sqlite3 *db, const char *column, const char *keyw
         return resultList; // Return an empty list on error
     }
 
-    printf("Executing SQL statement...\n");
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
     {
         struct Entity entity;
         entity.entity_type = ACCOUNT;
 
         entity.account.id = sqlite3_column_int(stmt, 0);
-        const char *name = (const char *)sqlite3_column_text(stmt, 1);
-        const char *mobile = (const char *)sqlite3_column_text(stmt, 2);
-        const char *email_address = (const char *)sqlite3_column_text(stmt, 3);
-        entity.account.balance = sqlite3_column_int(stmt, 4);
+        entity.account.account_number = sqlite3_column_int64(stmt, 1);
+        const char *name = (const char *)sqlite3_column_text(stmt, 2);
+        const char *mobile = (const char *)sqlite3_column_text(stmt, 3);
+        const char *email_address = (const char *)sqlite3_column_text(stmt, 4);
+        entity.account.balance = sqlite3_column_int(stmt, 5);
 
-        const char *date_opened_str = (const char *)sqlite3_column_text(stmt, 5);
+        const char *date_opened_str = (const char *)sqlite3_column_text(stmt, 6);
 
         entity.account.name = my_strdup(name);
         entity.account.mobile = my_strdup(mobile);
