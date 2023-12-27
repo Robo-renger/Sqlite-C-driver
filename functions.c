@@ -169,7 +169,6 @@ void createAccount(sqlite3 *db)
 
 void getAllTransactions(sqlite3 *db)
 {
-    struct EntityList transactionList = getAll(db, TRANSACTION);
 
     long account_number;
 
@@ -946,6 +945,7 @@ void advancedSearch(sqlite3 *db)
                 free(accountList.entities[i].account.email_address);
             }
         }
+        Menu(db);
         free(accountList.entities);
     }
 }
@@ -1026,4 +1026,5 @@ void regularSearch(sqlite3 *db)
         }
         free(accountList.entities);
     }
+        Menu(db);
 }
