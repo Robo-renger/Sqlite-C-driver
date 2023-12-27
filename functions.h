@@ -52,4 +52,7 @@ int isValidEmail(const char *email);
 
 int isValidPhoneNumber(const char *mobile);
 
+int isBlank(const char *str);
+
+
 #endif  

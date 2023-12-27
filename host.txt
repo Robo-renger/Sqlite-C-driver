@@ -1,2 +1,6 @@
 php -S localhost:8080
 http://127.0.0.1:8080/phpliteadmin.php
+
+____________________________________________
+
+gcc -o main main.c database.c functions.c  -lsqlite3 -std=c99

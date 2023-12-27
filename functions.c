@@ -77,53 +77,78 @@ void createAccount(sqlite3 *db)
     getCurrentDate(&currentDate);
 
     getchar();
-    printf("Enter name of the account: ");
-    if (fgets(name, sizeof(name), stdin) == NULL)
+    do
     {
-        fprintf(stderr, "\nError reading input.\n");
-        printf("Please Input valid Name \n");
-        Menu(db);
-    }
+        printf("Enter name of the account: ");
+        if (fgets(name, sizeof(name), stdin) == NULL)
+        {
+            fprintf(stderr, "\nError reading input.\n");
+            printf("Please Input valid Name \n");
+        }
 
-    size_t len = strlen(name);
-    if (len > 0 && name[len - 1] == '\n')
-    {
-        name[len - 1] = '\0';
-    }
+        size_t len = strlen(name);
+        if (len > 0 && name[len - 1] == '\n')
+        {
+            name[len - 1] = '\0';
+        }
 
-    printf("Enter mobile: ");
-    if (fgets(mobile, sizeof(mobile), stdin) == NULL)
-    {
-        fprintf(stderr, "\nError reading input.\n");
-        printf("Please Input valid Mobile \n");
-        Menu(db);
-    }
-    len = strlen(mobile);
-    if (len > 0 && mobile[len - 1] == '\n')
-    {
-        mobile[len - 1] = '\0';
-    }
+        if (isBlank(name))
+            printf("Name cannot be blank. Please enter a valid name.\n");
+        else if(!isValidName(name))
+            printf("Invalid name. Name should consist of letters only.\n");
+        
+    }while(isBlank(name) || !isValidName(name));
 
-    printf("Enter email: ");
-    if (fgets(email, sizeof(email), stdin) == NULL)
+    do
     {
-        fprintf(stderr, "\nError reading input.\n");
-        printf("Please Input valid Email \n");
-        Menu(db);
-    }
-    len = strlen(email);
-    if (len > 0 && email[len - 1] == '\n')
-    {
-        email[len - 1] = '\0';
-    }
+        printf("Enter mobile: ");
+        if (fgets(mobile, sizeof(mobile), stdin) == NULL)
+        {
+            fprintf(stderr, "\nError reading input.\n");
+            printf("Please Input valid Mobile \n");
+        }
+        size_t len = strlen(mobile);
+        if (len > 0 && mobile[len - 1] == '\n')
+        {
+            mobile[len - 1] = '\0';
+        }
+        
+        if (isBlank(mobile))
+            printf("Mobile number cannot be blank. Please enter a valid mobile number.\n");
+        else if(!isValidPhoneNumber(mobile))
+            printf("Invalid phone number. Phone number should consist of 11 integers.\n");
+    }while(isBlank(mobile) || !isValidPhoneNumber(mobile));
 
-    printf("Enter balance: ");
-    if (scanf("%lf", &balance) != 1)
+    do
+    {    
+        printf("Enter email: ");
+        if (fgets(email, sizeof(email), stdin) == NULL)
+        {
+            fprintf(stderr, "\nError reading input.\n");
+            printf("Please Input valid Email \n");
+        }
+        size_t len = strlen(email);
+        if (len > 0 && email[len - 1] == '\n')
+        {
+            email[len - 1] = '\0';
+        }
+        
+        if (isBlank(email))
+            printf("Email cannot be blank. Please enter a valid email address.\n");
+        else if(!isValidEmail(email))
+            printf("Invalid email address. Email address should contain '@'.\n");
+    }while(isBlank(email) || !isValidEmail(email));
+
+    do
     {
-        fprintf(stderr, "\nInvalid input for balance.\n");
-        printf("Please Input valid balance \n");
-        Menu(db);
-    }
+        printf("Enter balance: ");
+        while(scanf("%lf", &balance) != 1)
+        {
+            while (getchar() != '\n');
+            printf("Invalid input for balance. Please Input valid balance \n");
+            printf("Enter balance: ");
+        }
+    }while(balance<0);
 
     printf("Current Date: %d-%02d\n", currentDate.month, currentDate.year);
     struct Entity accountEntity;
@@ -137,6 +162,9 @@ void createAccount(sqlite3 *db)
     struct Account lastAccount = getLastInsertedAccount(db);
     lastAccount.account_number = generateAccountNumber(&lastAccount);
     edit(db, lastAccount);
+    
+    printf("Account created Successfully");
+    Menu(db);
 }
 
 void getAllTransactions(sqlite3 *db)
@@ -219,12 +247,24 @@ int isValidPhoneNumber(const char *mobile)
     return count == 11;
 }
 
+int isBlank(const char *str)
+{
+    while (*str)
+    {
+        if (!isspace((unsigned char)*str))
+            return 0;
+        str++;
+    }
+    return 1; 
+}
+
 void Menu(sqlite3 *db)
 {
     struct EntityList accountList;
+    char name[MAX_LENGTH],mobile[MAX_LENGTH],email[MAX_LENGTH];
     long account_number;
     int choice;
-    char name[MAX_LENGTH], mobile[MAX_LENGTH], email[MAX_LENGTH];
+    
     printf("Choose an option:\n");
     printf("1. Add\n");
     printf("2. Delete\n");
@@ -241,8 +281,7 @@ void Menu(sqlite3 *db)
     if (scanf("%d", &choice) != 1)
     {
         printf("Invalid input. Please enter a valid integer.\n");
-        while (getchar() != '\n')
-            ;
+        while (getchar() != '\n');
         Menu(db);
     }
 
@@ -255,13 +294,12 @@ void Menu(sqlite3 *db)
         printf("Please, enter the account number: ");
         while (scanf("%ld", &account_number) != 1)
         {
-            while (getchar() != '\n')
-                ;
+            while (getchar() != '\n');
             printf("Invalid input for account number, please enter a valid number.\n");
             printf("Please, enter your account number:");
         }
-        accountList = get(db, account_number, ACCOUNT);
 
+        accountList = get(db, account_number, ACCOUNT);
         if (accountList.size == 0)
         {
             printf("Account number not found, please try again.\n");
@@ -286,12 +324,11 @@ void Menu(sqlite3 *db)
         printf("Please, enter the account number: ");
         while (scanf("%ld", &account_number) != 1)
         {
-            while (getchar() != '\n')
-                ;
+            while (getchar() != '\n');
             printf("Invalid input for account number, please enter a valid number.\n");
             printf("Please, enter your account number:");
         }
-
+        
         accountList = get(db, account_number, ACCOUNT);
         if (accountList.size == 0)
         {
@@ -299,61 +336,68 @@ void Menu(sqlite3 *db)
             Menu(db);
         }
 
-        printf("If you don't want to edit a field just press ENTER\n");
-        printf("Update Name field:");
         getchar();
-        if (fgets(name, sizeof(name), stdin) == NULL)
-        {
-            fprintf(stderr, "Error reading input.\n");
-            exit(EXIT_FAILURE);
-        }
-        size_t lenn = strlen(name);
-        if (lenn > 0 && name[lenn - 1] == '\n')
-        {
-            name[lenn - 1] = '\0';
-        }
-
-        if(!isValidName(name))
-        {
-            printf("Invalid name. Name should consist of letters only.\n");
-            Menu(db);
-        }
-
-        printf("Update Phone number field:");
-        if (fgets(mobile, sizeof(mobile), stdin) == NULL)
-        {
-            fprintf(stderr, "Error reading input.\n");
-            exit(EXIT_FAILURE);
-        }
-        size_t lenm = strlen(mobile);
-        if (lenm > 0 && mobile[lenm - 1] == '\n')
-        {
-            mobile[lenm - 1] = '\0';
-        }
-
-        if(!isValidPhoneNumber(mobile))
-        {
-            printf("Invalid phone number. Phone number should consist of 11 integers.\n");
-            Menu(db);
-        }
-
-        printf("Update E-mail field:");
-        if (fgets(email, sizeof(email), stdin) == NULL)
-        {
-            fprintf(stderr, "Error reading input.\n");
-            exit(EXIT_FAILURE);
-        }
-        size_t lene = strlen(email);
-        if (lene > 0 && email[lene - 1] == '\n')
-        {
-            email[lene - 1] = '\0';
-        }
+        printf("If you don't want to edit a field just press ENTER\n");
         
-        if(!isValidEmail(email))
+        do
         {
-            printf("Invalid email address. Email address should contain '@'.\n");
-            Menu(db);
-        }
+            printf("Update Name field:");
+            if (fgets(name, sizeof(name), stdin) == NULL)
+            {
+                fprintf(stderr, "Error reading input.\n");
+                exit(EXIT_FAILURE);
+            }
+            size_t lenn = strlen(name);
+            if (lenn > 0 && name[lenn - 1] == '\n')
+            {
+                name[lenn - 1] = '\0';
+            }
+
+            if(isBlank(name))
+                break;
+            if(!isValidName(name))
+                printf("Invalid name. Name should consist of letters only.\n");
+        }while(!isValidName(name));
+
+        do
+        {
+            printf("Update Phone number field:");
+            if (fgets(mobile, sizeof(mobile), stdin) == NULL)
+            {
+                fprintf(stderr, "Error reading input.\n");
+                exit(EXIT_FAILURE);
+            }
+            size_t lenm = strlen(mobile);
+            if (lenm > 0 && mobile[lenm - 1] == '\n')
+            {
+                mobile[lenm - 1] = '\0';
+            }
+
+            if(isBlank(mobile))
+                break;
+            if(!isValidPhoneNumber(mobile))
+                printf("Invalid phone number. Phone number should consist of 11 integers.\n");
+        }while(!isValidPhoneNumber(mobile));
+        
+        do
+        {
+            printf("Update E-mail field:");
+            if (fgets(email, sizeof(email), stdin) == NULL)
+            {
+                fprintf(stderr, "Error reading input.\n");
+                exit(EXIT_FAILURE);
+            }
+            size_t lene = strlen(email);
+            if (lene > 0 && email[lene - 1] == '\n')
+            {
+                email[lene - 1] = '\0';
+            }
+            
+            if(isBlank(email))
+                break;
+            if(!isValidEmail(email))
+                printf("Invalid email address. Email address should contain '@'.\n");
+        }while(!isValidEmail(email));
 
         if (name[0] != '\0')
             strcpy(accountList.entities[0].account.name, name);
@@ -362,7 +406,7 @@ void Menu(sqlite3 *db)
         if (mobile[0] != '\0')
             strcpy(accountList.entities[0].account.mobile, mobile);
         
-        if(edit(db,accountList.entities[0].account))
+        if(Save(db,&accountList.entities[0].account,&accountList,1))
         {
             printf("Account edited successfully\n");
             Menu(db);
