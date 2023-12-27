@@ -171,16 +171,35 @@ void getAllTransactions(sqlite3 *db)
 {
     struct EntityList transactionList = getAll(db, TRANSACTION);
 
-    printf("Transaction entities:\n");
-    for (size_t i = 0; i < transactionList.size; ++i)
+    long account_number;
+
+    printf("Please, enter your account number: ");
+    while (scanf("%ld", &account_number) != 1)
     {
-        printf("Transaction ID: %d, Account Number: %ld,Price: %lf\n",
-               transactionList.entities[i].transaction.id,
-               transactionList.entities[i].transaction.account_number,
-               transactionList.entities[i].transaction.price);
+        while (getchar() != '\n');
+        printf("Invalid input for account number, please enter a valid number.\n");
+        printf("Please, enter your account number:");
     }
 
+    struct EntityList transactionList = get(db,account_number,TRANSACTION);
+    
+    if (transactionList.size == 0)
+        printf("No transactions found for account %ld.\n", account_number);
+    else
+    {
+        printf("Last 5 transactions for account %ld:\n", account_number);
+        size_t numTransactionsToPrint = (transactionList.size < 5) ? transactionList.size : 5;
+        for (size_t i = transactionList.size - numTransactionsToPrint; i < transactionList.size; i++)
+        {
+            printf("Transaction ID: %d, Account Number: %ld, Price: %lf, Type: %s\n",
+                   transactionList.entities[i].transaction.id,
+                   transactionList.entities[i].transaction.account_number,
+                   transactionList.entities[i].transaction.price,
+                   transactionList.entities[i].transaction.type);
+        }
+    }
     freeEntityList(&transactionList);
+    Menu(db);
 }
 
 void getAllAccounts(sqlite3 *db)
@@ -406,6 +425,10 @@ void Menu(sqlite3 *db)
         if (mobile[0] != '\0')
             strcpy(accountList.entities[0].account.mobile, mobile);
         
+        struct Date currentDate;
+        getCurrentDate(&currentDate);
+        accountList.entities[0].account.date_opened = currentDate;
+
         if(Save(db,&accountList.entities[0].account,&accountList,1))
         {
             printf("Account edited successfully\n");
@@ -495,6 +518,7 @@ void makeTransaction(sqlite3 *db, struct Account account, char *transaction_type
     transaction.transaction.type = transaction_type;
     transaction.entity_type = TRANSACTION;
     insert(db, transaction);
+
 }
 
 void Withdraw(sqlite3 *db)
@@ -549,9 +573,13 @@ void Withdraw(sqlite3 *db)
     }
     account.balance -= amount;
 
+    struct Date currentDate;
+    getCurrentDate(&currentDate);
+    account.date_opened = currentDate;
+
     if (Save(db, &account, &accountList, 1))
         makeTransaction(db, account, "withdraw", amount);
-
+    
     Menu(db);
 }
 
@@ -594,6 +622,10 @@ void Deposit(sqlite3 *db)
         scanf("%lf", &amount);
     }
     account.balance += amount;
+
+    struct Date currentDate;
+    getCurrentDate(&currentDate);
+    account.date_opened = currentDate;
 
     if (Save(db, &account, &accountList, 1))
         makeTransaction(db, account, "deposit", amount);
@@ -673,6 +705,11 @@ void Transfer(sqlite3 *db)
 
     sender.balance -= amount;
     receiver.balance += amount;
+
+    struct Date currentDate;
+    getCurrentDate(&currentDate);
+    sender.date_opened = currentDate;
+    receiver.date_opened = currentDate;
 
     struct Account accounts[] = {sender, receiver};
     struct EntityList accountsList[] = {senderAccountList, receiverAccountList};

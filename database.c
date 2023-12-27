@@ -138,9 +138,9 @@ struct EntityList get(sqlite3 *db, long account_number, enum EntityType entity_t
             entity.entity_type = TRANSACTION;
 
             entity.transaction.id = sqlite3_column_int(stmt, 0);
-            entity.transaction.account_number = sqlite3_column_int64(stmt, 2);
-            entity.transaction.price = sqlite3_column_double(stmt, 3);
-            const char *type = (const char *)sqlite3_column_text(stmt, 4);
+            entity.transaction.account_number = sqlite3_column_int64(stmt, 1);
+            entity.transaction.price = sqlite3_column_double(stmt, 2);
+            const char *type = (const char *)sqlite3_column_text(stmt, 3);
                          entity.transaction.type = my_strdup(type);
 
                          entityList.entities = realloc(entityList.entities, (entityList.size + 1) * sizeof(struct Entity));
