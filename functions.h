@@ -14,15 +14,15 @@ int generateUniqueID(const struct Account *account);
 
 void getCurrentDate(struct Date *currentDate);
 
-int Save(sqlite3 *db,struct Account *accounts,struct EntityList *accountsList,int numberOfAccounts);
+int save(sqlite3 *db,struct Account *accounts,struct EntityList *accountsList,int numberOfAccounts);
 
-void Menu(sqlite3 *db);
+void menu(sqlite3 *db);
 
-void Withdraw(sqlite3 *db);
+void withdraw(sqlite3 *db);
 
-void Deposit(sqlite3 *db);
+void deposit(sqlite3 *db);
 
-void Transfer(sqlite3 *db);
+void transfer(sqlite3 *db);
 
 void makeTransaction(sqlite3 *db, struct Account account, char *transaction_type,double amount);
 
@@ -30,13 +30,13 @@ void getAllTransactions(sqlite3 *db);
 
 void getTransactions(sqlite3 *db);
 
-void Print(struct EntityList *entityList,sqlite3 *db);
+void print(struct EntityList *entityList,sqlite3 *db);
 
-void SortByName(struct EntityList *entityList,sqlite3 *db);
+void sortByName(struct EntityList *entityList,sqlite3 *db);
 
-void SortByBalance(struct EntityList *entityList,sqlite3 *db);
+void sortByBalance(struct EntityList *entityList,sqlite3 *db);
 
-void SortByDate(struct EntityList *entityList,sqlite3 *db);
+void sortByDate(struct EntityList *entityList,sqlite3 *db);
 
 int loginUser(sqlite3* db);
 
